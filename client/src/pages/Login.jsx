@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
-import api from "../utils/api";
 import "../style/Adminlogin.css";
 
 const Login = () => {
@@ -9,42 +8,53 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+    e.preventDefault();
+    setError("");
+    setSuccessMsg("");
+    setLoading(true);
 
-  try {
-    const response = await api.post("/auth/login", { email, password });
-
-    // Kiểm tra rõ ràng token & user
-    if (response.data?.token && response.data?.user) {
-      localStorage.setItem("token", response.data.token);
-      login(response.data.user);
-
-      // Chỉ chuyển trang khi login thành công thật
-      navigate("/");
-    } else {
-      throw new Error("Invalid login response from server.");
+    if (!email || !password) {
+      setError("Please enter email and password");
+      setLoading(false);
+      return;
     }
-  } catch (err) {
-    // Reset loading
-    setLoading(false);
 
-    // Xử lý lỗi rõ ràng
-    const errorMsg =
-      err.response?.data?.message ||
-      err.response?.data?.error ||
-      err.message ||
-      "Invalid email or password. Please try again.";
+    try {
+      console.log("🔐 Attempting login with:", email);
 
-    setError(errorMsg);
-    console.error("Login error:", err);
-  }
-};
+      // Use Auth Context's login function (it handles API call)
+      const result = await login(email, password);
+
+      console.log("📊 Login result:", result);
+
+      if (result.success && result.user) {
+        console.log("✅ Login successful! User:", result.user);
+        setSuccessMsg(
+          `Welcome back, ${result.user.username || result.user.email}!`
+        );
+        setLoading(false);
+
+        // Redirect after 1 second
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
+      } else {
+        console.log("❌ Login failed:", result.message);
+        setError(result.message || "Login failed");
+        setLoading(false);
+      }
+    } catch (err) {
+      setLoading(false);
+      console.error("❌ Login exception:", err);
+      setError("An unexpected error occurred");
+    }
+  };
+
   return (
     <div className="admin-login-page">
       <div className="login-container">
@@ -54,6 +64,25 @@ const Login = () => {
             <h1>Login</h1>
             <p>Welcome back to My Blog</p>
           </div>
+
+          {successMsg && (
+            <div
+              style={{
+                background: "#efe",
+                color: "#0a0",
+                padding: "1rem",
+                borderRadius: "8px",
+                marginBottom: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                fontSize: "0.95rem",
+              }}
+            >
+              <i className="fas fa-check-circle"></i>
+              <span>{successMsg}</span>
+            </div>
+          )}
 
           {error && (
             <div

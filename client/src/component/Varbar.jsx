@@ -142,13 +142,14 @@ const Navbar = () => {
 
                         {/* Menu Items */}
                         <div className="dropdown-items">
+                  
                           <Link
                             to={`/profile/${user?._id}`}
                             className="dropdown-item"
                             onClick={closeProfileDropdown}
                           >
                             <i className="fas fa-user-circle"></i>
-                            <span>View Profile</span>
+                            <span> View your profile </span>
                           </Link>
 
                           <Link
