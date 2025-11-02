@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Post from '../model/Post.js'; 
 import { useAuth } from "../context/Authcontext";
 import "../style/Navbar.css";
 
@@ -42,7 +41,7 @@ const Navbar = () => {
 
   return (
     <nav className="navbar">
-      <div className="container navbar-content">
+      <div className="navbar-content">
         {/* Logo - Bên trái */}
         <Link to="/" className="navbar-brand" onClick={closeMenu}>
           <i className="fas fa-blog"></i> My Blog
@@ -60,29 +59,26 @@ const Navbar = () => {
 
         {/* Navbar Links - Bên phải */}
         <div className={`navbar-links ${isMenuOpen ? "active" : ""}`}>
-          {/* Section 1: Home */}
+          {/* Section 1: Home, Register, Login - cùng một section */}
           <div className="navbar-section home-section">
             <Link to="/" onClick={closeMenu}>
               <i className="fas fa-home"></i> Home
             </Link>
-          </div>
-
-          {/* Section 2: Auth Links hoặc Profile */}
-          <div className="navbar-section auth-section">
-            {!authState ? (
+            {!authState && (
               <>
-                <Link to="/login" onClick={closeMenu} className="btn-login">
-                  <i className="fas fa-sign-in-alt"></i> Login
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={closeMenu}
-                  className="btn-register"
-                >
+                <Link to="/register" onClick={closeMenu}>
                   <i className="fas fa-user-plus"></i> Register
                 </Link>
+                <Link to="/login" onClick={closeMenu}>
+                  <i className="fas fa-sign-in-alt"></i> Login
+                </Link>
               </>
-            ) : (
+            )}
+          </div>
+
+          {/* Section 2: Dashboard & Profile - chỉ khi đã login */}
+          <div className="navbar-section auth-section">
+            {authState && (
               <>
                 {user?.role === "admin" && (
                   <Link
@@ -114,6 +110,9 @@ const Navbar = () => {
                             "https://via.placeholder.com/40?text=Avatar")
                         }
                       />
+                      <span className="username-text">
+                        {user?.username || user?.email?.split("@")[0]}
+                      </span>
                       <i className="fas fa-chevron-down"></i>
                     </button>
 

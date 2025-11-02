@@ -1,0 +1,88 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem 3rem;
+  border-radius: 0;
+  margin-bottom: 2rem;
+}
+
+.header-left {
+  flex: 0 0 auto;
+  margin-right: 3rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  color: white;
+  margin: 0;
+  font-weight: bold;
+}
+
+.header-nav {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: white;
+  text-decoration: none;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  transition: all 0.3s;
+  font-size: 1rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.nav-btn:hover {
+  opacity: 0.8;
+}
+
+.nav-btn:nth-child(2) {
+  background-color: white;
+  color: #667eea;
+  border-radius: 25px;
+  padding: 0.6rem 1.5rem;
+}
+
+.nav-btn:nth-child(2):hover {
+  opacity: 0.9;
+}
+
+.login-btn {
+  background-color: white;
+  color: #667eea;
+  border-radius: 25px;
+  padding: 0.6rem 1.5rem;
+  margin-left: auto;
+}
+
+.login-btn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .header-nav {
+    gap: 1.5rem;
+  }
+
+  .nav-btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}

@@ -1,54 +1,50 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import api from '../utils/api';
-import { useAuth } from '../context/Authcontext';
-import '../style/Adminlogin.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/Authcontext";
+import api from "../utils/api";
+import "../style/Adminlogin.css";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { login } = useAuth();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!email || !password) {
-      setError('Please enter email and password');
-      return;
+  const handleLogin = async (e) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
+
+  try {
+    const response = await api.post("/auth/login", { email, password });
+
+    // Kiểm tra rõ ràng token & user
+    if (response.data?.token && response.data?.user) {
+      localStorage.setItem("token", response.data.token);
+      login(response.data.user);
+
+      // Chỉ chuyển trang khi login thành công thật
+      navigate("/");
+    } else {
+      throw new Error("Invalid login response from server.");
     }
+  } catch (err) {
+    // Reset loading
+    setLoading(false);
 
-    try {
-      setLoading(true);
-      const res = await api.post('/auth/login', { email, password });
-      
-      if (res.data.token && res.data.user) {
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('user', JSON.stringify(res.data.user));
-        
-        if (login) {
-          login(res.data.user, res.data.token);
-        }
+    // Xử lý lỗi rõ ràng
+    const errorMsg =
+      err.response?.data?.message ||
+      err.response?.data?.error ||
+      err.message ||
+      "Invalid email or password. Please try again.";
 
-        const from = location.state?.from?.pathname;
-        if (res.data.user.role === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate(from || '/');
-        }
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    setError(errorMsg);
+    console.error("Login error:", err);
+  }
+};
   return (
     <div className="admin-login-page">
       <div className="login-container">
@@ -56,71 +52,79 @@ const Login = () => {
           <div className="login-header">
             <i className="fas fa-sign-in-alt"></i>
             <h1>Login</h1>
-            <p>Sign in to your account</p>
+            <p>Welcome back to My Blog</p>
           </div>
 
           {error && (
-            <div className="alert alert-error">
-              <i className="fas fa-exclamation-circle"></i> {error}
+            <div
+              style={{
+                background: "#fee",
+                color: "#c00",
+                padding: "1rem",
+                borderRadius: "8px",
+                marginBottom: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                fontSize: "0.95rem",
+              }}
+            >
+              <i className="fas fa-exclamation-circle"></i>
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="login-form">
+          <form onSubmit={handleLogin} className="login-form">
             <div className="form-group">
-              <label htmlFor="email">
-                <i className="fas fa-envelope"></i> Email
+              <label>
+                <i className="fas fa-envelope"></i>
+                Email
               </label>
               <input
-                id="email"
                 type="email"
                 className="form-control"
+                placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                placeholder="your@email.com"
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="password">
-                <i className="fas fa-lock"></i> Password
+              <label>
+                <i className="fas fa-lock"></i>
+                Password
               </label>
               <input
-                id="password"
                 type="password"
                 className="form-control"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                placeholder="••••••••"
               />
             </div>
 
             <button type="submit" className="btn-login" disabled={loading}>
-              {loading ? (
-                <>
-                  <i className="fas fa-spinner fa-spin"></i> Logging in...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-sign-in-alt"></i> Login
-                </>
-              )}
+              <i className="fas fa-sign-in-alt"></i>
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
 
           <div className="login-footer">
-            <p><strong>Demo Accounts:</strong></p>
-            <p>Admin: admin@blog.com / password</p>
-            <p>User: user@blog.com / password</p>
-            <p style={{ marginTop: '1rem', borderTop: '1px solid #ddd', paddingTop: '1rem' }}>
-              Don't have an account? 
-              <Link to="/register" style={{ color: '#667eea', fontWeight: 600, marginLeft: '0.5rem', textDecoration: 'none' }}>
-                Register here
-              </Link>
-            </p>
+            <p>Don't have an account?</p>
+            <a
+              href="/register"
+              style={{
+                color: "#667eea",
+                textDecoration: "none",
+                fontWeight: "600",
+              }}
+            >
+              Register here
+            </a>
           </div>
         </div>
       </div>
