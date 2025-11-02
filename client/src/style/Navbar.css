@@ -1,9 +1,20 @@
 /* Navbar Layout */
+.navbar {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0;
+}
+
 .navbar-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 0;
+  width: 100%;
+  padding: 1rem 2rem;
+}
+
+.navbar-content > * {
+  font-size: 16px;
 }
 
 .navbar-brand {
@@ -33,7 +44,7 @@
 }
 
 .home-section {
-  margin-right: auto;  /* ← Đẩy phần còn lại sang phải */
+  margin-right: auto; /* ← Đẩy phần còn lại sang phải */
 }
 
 .auth-section {
@@ -58,6 +69,50 @@
 .navbar-links a:hover {
   background-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
+}
+/* Navbar Toggle Button (menu icon) */
+.navbar-toggle {
+  display: none; /* Ẩn trên desktop */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  gap: 6px;
+}
+
+.navbar-toggle span {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background: white;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+/* Khi mở menu (hiệu ứng X) */
+.navbar-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.navbar-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+.navbar-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* Responsive - hiện toggle khi nhỏ */
+@media (max-width: 768px) {
+  .navbar-toggle {
+    display: flex;
+  }
+
+  .navbar-links {
+    flex-direction: column;
+  }
 }
 
 /* Button Styles */
