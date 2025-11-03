@@ -204,6 +204,93 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // -------------------------
+  // Forgot password - request a reset code
+  const requestPasswordReset = async (email) => {
+    try {
+      setError(null);
+
+      if (!email) {
+        setError("Email is required");
+        return { success: false, message: "Email is required" };
+      }
+
+      console.log("📧 Sending password reset to:", email);
+
+      const res = await api.post("/auth/forgot-password", { email });
+
+      console.log("✅ Password reset sent:", res.data);
+
+      return {
+        success: true,
+        message: res.data?.message || "Reset code sent to your email",
+      };
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.message || err.message || "Request failed";
+      console.error("❌ Password reset error:", errorMsg);
+      setError(errorMsg);
+      return { success: false, message: errorMsg };
+    }
+  };
+
+  // Reset password using token (from email)
+  const resetPassword = async (token, newPassword, confirmPassword) => {
+    try {
+      setError(null);
+
+      if (!token) {
+        setError("Reset token is required");
+        return { success: false, message: "Reset token is required" };
+      }
+
+      if (!newPassword || !confirmPassword) {
+        setError("Both password fields are required");
+        return { success: false, message: "Both password fields are required" };
+      }
+
+      if (newPassword !== confirmPassword) {
+        setError("Passwords do not match");
+        return { success: false, message: "Passwords do not match" };
+      }
+
+      if (newPassword.length < 6) {
+        setError("Password must be at least 6 characters");
+        return {
+          success: false,
+          message: "Password must be at least 6 characters",
+        };
+      }
+
+      const res = await api.post("/auth/reset-password", {
+        token,
+        password: newPassword,
+      });
+
+      // Some APIs return token+user after reset; handle that gracefully
+      const resToken = res.data?.token;
+      const resUser = res.data?.user;
+
+      if (resToken && resUser) {
+        localStorage.setItem("token", resToken);
+        localStorage.setItem("user", JSON.stringify(resUser));
+        setUser(resUser);
+        setIsAuthenticated(true);
+      }
+
+      setError(null);
+      return {
+        success: true,
+        message: res.data?.message || "Password reset successful",
+      };
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.message || err.message || "Password reset failed";
+      setError(errorMsg);
+      return { success: false, message: errorMsg };
+    }
+  };
+
   // Kiểm tra user là admin
   const isAdmin = () => {
     return user?.role === "admin";
@@ -230,6 +317,8 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     updateAvatar,
     changePassword,
+    requestPasswordReset,
+    resetPassword,
     isAdmin,
     getToken,
     clearError,

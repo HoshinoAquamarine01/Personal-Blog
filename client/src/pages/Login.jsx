@@ -134,6 +134,18 @@ const Login = () => {
                 required
                 disabled={loading}
               />
+              <div style={{ marginTop: "0.5rem", textAlign: "right" }}>
+                <a
+                  href="/forgot-password"
+                  style={{
+                    color: "#667eea",
+                    textDecoration: "none",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  Forgot Password?
+                </a>
+              </div>
             </div>
 
             <button type="submit" className="btn-login" disabled={loading}>
