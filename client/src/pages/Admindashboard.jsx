@@ -77,6 +77,37 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleBanUser = async (userId) => {
+    if (!window.confirm("Ban this user?")) return;
+    try {
+      await api.patch(`/users/${userId}/ban`);
+      fetchDashboardData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to ban user");
+    }
+  };
+
+  const handleUnbanUser = async (userId) => {
+    if (!window.confirm("Unban this user?")) return;
+    try {
+      await api.patch(`/users/${userId}/unban`);
+      fetchDashboardData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to unban user");
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Delete this user? This action cannot be undone!"))
+      return;
+    try {
+      await api.delete(`/users/${userId}`);
+      fetchDashboardData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete user");
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -295,13 +326,17 @@ const AdminDashboard = () => {
                       <th>Username</th>
                       <th>Email</th>
                       <th>Role</th>
+                      <th>Status</th>
                       <th>Joined</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {users.map((u) => (
-                      <tr key={u._id}>
+                      <tr
+                        key={u._id}
+                        className={u.isBanned ? "banned-user" : ""}
+                      >
                         <td>
                           <strong>{u.username}</strong>
                         </td>
@@ -315,15 +350,45 @@ const AdminDashboard = () => {
                             {u.role}
                           </span>
                         </td>
+                        <td>
+                          <span
+                            className={`status-badge ${
+                              u.isBanned ? "banned" : "active"
+                            }`}
+                          >
+                            {u.isBanned ? "🚫 Banned" : "✅ Active"}
+                          </span>
+                        </td>
                         <td>{new Date(u.createdAt).toLocaleDateString()}</td>
                         <td className="actions-cell">
-                          <button
-                            onClick={() => navigate(`/profile/${u._id}`)}
-                            className="btn-action view"
-                            title="View Profile"
-                          >
-                            <i className="fas fa-user"></i>
-                          </button>
+                          {u.role !== "admin" && (
+                            <>
+                              {u.isBanned ? (
+                                <button
+                                  onClick={() => handleUnbanUser(u._id)}
+                                  className="btn-action unban"
+                                  title="Unban"
+                                >
+                                  <i className="fas fa-check"></i>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleBanUser(u._id)}
+                                  className="btn-action ban"
+                                  title="Ban"
+                                >
+                                  <i className="fas fa-ban"></i>
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDeleteUser(u._id)}
+                                className="btn-action delete"
+                                title="Delete"
+                              >
+                                <i className="fas fa-trash"></i>
+                              </button>
+                            </>
+                          )}
                         </td>
                       </tr>
                     ))}

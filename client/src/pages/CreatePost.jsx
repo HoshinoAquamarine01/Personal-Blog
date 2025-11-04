@@ -18,7 +18,9 @@ const CreatePost = () => {
   const [error, setError] = useState("");
 
   React.useEffect(() => {
+    console.log("🔍 User info:", { user, isAdmin: isAdmin() });
     if (!user || !isAdmin()) {
+      console.error("❌ User is not admin, redirecting...");
       navigate("/");
     }
   }, [user]);
@@ -36,22 +38,62 @@ const CreatePost = () => {
     setError("");
     setLoading(true);
 
-    if (!formData.title || !formData.content) {
-      setError("Title and content are required");
+    console.log("📝 Submitting post form:", formData);
+
+    if (!formData.title.trim()) {
+      setError("Title is required");
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.content.trim()) {
+      setError("Content is required");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.title.length < 3) {
+      setError("Title must be at least 3 characters");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.content.length < 10) {
+      setError("Content must be at least 10 characters");
       setLoading(false);
       return;
     }
 
     try {
-      const res = await api.post("/posts", {
-        ...formData,
-        tags: formData.tags.split(",").map((tag) => tag.trim()),
-      });
+      console.log("🚀 Calling API POST /posts...");
 
+      const payload = {
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        category: formData.category,
+        tags: formData.tags
+          ? formData.tags.split(",").map((tag) => tag.trim())
+          : [],
+        thumbnail: formData.thumbnail.trim() || "",
+      };
+
+      console.log("📦 Payload:", payload);
+
+      const res = await api.post("/posts", payload);
+
+      console.log("✅ Post created successfully:", res.data);
       alert("Post created successfully!");
       navigate(`/posts/${res.data._id}`);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create post");
+      console.error("❌ Error response:", {
+        status: err.response?.status,
+        message: err.response?.data?.message,
+        error: err.response?.data?.error,
+        fullError: err,
+      });
+      setError(
+        err.response?.data?.message || err.message || "Failed to create post"
+      );
     } finally {
       setLoading(false);
     }

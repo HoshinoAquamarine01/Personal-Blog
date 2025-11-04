@@ -105,4 +105,70 @@ router.post("/:id/change-password", verifyToken, async (req, res) => {
   }
 });
 
+// Ban user (admin only)
+router.patch("/:id/ban", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prevent banning admin
+    if (user.role === "admin") {
+      return res.status(403).json({ message: "Cannot ban admin users" });
+    }
+
+    user.isBanned = true;
+    await user.save();
+
+    res.json({ message: "User banned successfully", user: user.toJSON() });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error banning user", error: error.message });
+  }
+});
+
+// Unban user (admin only)
+router.patch("/:id/unban", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.isBanned = false;
+    await user.save();
+
+    res.json({ message: "User unbanned successfully", user: user.toJSON() });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error unbanning user", error: error.message });
+  }
+});
+
+// Delete user (admin only)
+router.delete("/:id", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prevent deleting admin
+    if (user.role === "admin") {
+      return res.status(403).json({ message: "Cannot delete admin users" });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error deleting user", error: error.message });
+  }
+});
+
 export default router;
