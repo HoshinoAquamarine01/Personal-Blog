@@ -1,68 +1,67 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import '../style/Postcard.css';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import "../style/Postcard.css";
 
 const PostCard = ({ post }) => {
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
+  const navigate = useNavigate();
 
-  const truncateContent = (content, maxLength = 200) => {
-    if (!content) return '';
-    if (content.length <= maxLength) return content;
-    return content.substring(0, maxLength) + '...';
+  const handleReadMore = () => {
+    navigate(`/posts/${post._id}`);
   };
 
   return (
     <div className="post-card">
-      <div className="post-card-header">
-        <h2 className="post-title">
-          <Link to={`/post/${post._id}`}>{post.title}</Link>
-        </h2>
-        {post.category && (
-          <span className="post-category">{post.category}</span>
-        )}
-      </div>
-      
-      <div className="post-meta">
-        <span className="post-author">
-          <i className="fas fa-user"></i> {post.author?.username || post.author || 'Anonymous'}
-        </span>
-        <span className="post-date">
-          <i className="fas fa-calendar"></i> {formatDate(post.createdAt)}
-        </span>
-      </div>
-
-      <p className="post-content">
-        {truncateContent(post.content)}
-      </p>
-
-      {post.tags && post.tags.length > 0 && (
-        <div className="post-tags">
-          {post.tags.slice(0, 3).map((tag, index) => (
-            <span key={index} className="tag">#{tag}</span>
-          ))}
+      {post.thumbnail && (
+        <div className="post-card-image">
+          <img src={post.thumbnail} alt={post.title} />
         </div>
       )}
 
-      <div className="post-footer">
-        <div className="post-stats">
-          <span className="post-comments">
-            <i className="fas fa-comments"></i> {post.comments?.length || 0}
-          </span>
-          {post.views && (
-            <span className="post-views">
-              <i className="fas fa-eye"></i> {post.views}
-            </span>
-          )}
+      <div className="post-card-content">
+        <div className="post-card-header">
+          <h3>{post.title}</h3>
+          <span className="category-badge">{post.category}</span>
         </div>
-        <Link to={`/post/${post._id}`} className="btn-read-more">
-          Read More <i className="fas fa-arrow-right"></i>
-        </Link>
+
+        <p className="post-card-excerpt">{post.content.substring(0, 150)}...</p>
+
+        <div className="post-card-meta">
+          <span className="meta-item">
+            <i className="fas fa-user"></i>
+            <span className="meta-text">
+              {post.author?.username || "Unknown"}
+            </span>
+          </span>
+          <span className="meta-item">
+            <i className="fas fa-calendar"></i>
+            <span className="meta-text">
+              {new Date(post.createdAt).toLocaleDateString()}
+            </span>
+          </span>
+          <span className="meta-item">
+            <i className="fas fa-eye"></i>
+            <span className="meta-text">{post.views || 0}</span>
+          </span>
+          <span className="meta-item">
+            <i className="fas fa-heart"></i>
+            <span className="meta-text">{post.likes || 0}</span>
+          </span>
+        </div>
+
+        {post.tags && post.tags.length > 0 && (
+          <div className="post-card-tags">
+            {post.tags.slice(0, 3).map((tag, idx) => (
+              <span key={idx} className="tag">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <button onClick={handleReadMore} className="btn-read-more">
+          Read More
+          <i className="fas fa-arrow-right"></i>
+        </button>
       </div>
     </div>
   );
