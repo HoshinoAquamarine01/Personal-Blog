@@ -93,6 +93,17 @@ const PostDetail = () => {
     }
   };
 
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm("Delete this comment?")) return;
+
+    try {
+      const res = await api.delete(`/posts/${id}/comments/${commentId}`);
+      setPost(res.data.post);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete comment");
+    }
+  };
+
   if (loading) {
     return (
       <div className="post-detail-page">
@@ -222,10 +233,29 @@ const PostDetail = () => {
               post.comments.map((comment) => (
                 <div key={comment._id} className="comment-item">
                   <div className="comment-header">
-                    <strong>{comment.author?.username || "Unknown"}</strong>
-                    <span className="comment-date">
-                      {new Date(comment.createdAt).toLocaleDateString()}
-                    </span>
+                    <div className="comment-author-info">
+                      <strong>{comment.author?.username || "Unknown"}</strong>
+                      {comment.author?.role === "admin" && (
+                        <span className="author-badge">
+                          <i className="fas fa-crown"></i> Author
+                        </span>
+                      )}
+                    </div>
+                    <div className="comment-header-right">
+                      <span className="comment-date">
+                        {new Date(comment.createdAt).toLocaleDateString()}
+                      </span>
+                      {(user?.role === "admin" ||
+                        user?._id === comment.author?._id) && (
+                        <button
+                          onClick={() => handleDeleteComment(comment._id)}
+                          className="btn-delete-comment"
+                          title="Delete comment"
+                        >
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="comment-text">{comment.text}</p>
                 </div>

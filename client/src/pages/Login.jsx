@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
+import api from "../utils/api";
 import "../style/Adminlogin.css";
 
 const Login = () => {
@@ -11,6 +12,68 @@ const Login = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  useEffect(() => {
+    // Load Google Sign-In script
+    const loadGoogleScript = () => {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        console.log("✅ Google script loaded");
+        if (window.google) {
+          console.log("🔐 Initializing Google Sign-In...");
+          window.google.accounts.id.initialize({
+            client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+            callback: handleGoogleLogin,
+          });
+
+          // Wait for DOM to be ready
+          setTimeout(() => {
+            const buttonDiv = document.getElementById("google-signin-button");
+            if (buttonDiv) {
+              console.log("✅ Rendering Google button");
+              window.google.accounts.id.renderButton(buttonDiv, {
+                theme: "outline",
+                size: "large",
+                width: "100%",
+              });
+            } else {
+              console.error("❌ Google button container not found");
+            }
+          }, 100);
+        }
+      };
+      script.onerror = () => {
+        console.error("❌ Failed to load Google script");
+        setError("Failed to load Google Sign-In");
+      };
+      document.head.appendChild(script);
+    };
+
+    loadGoogleScript();
+
+    // Load Facebook SDK
+    window.fbAsyncInit = function () {
+      if (window.FB) {
+        console.log("✅ Facebook SDK initialized");
+        window.FB.init({
+          appId: "YOUR_FACEBOOK_APP_ID",
+          xfbml: true,
+          version: "v18.0",
+        });
+      }
+    };
+
+    if (!window.FB) {
+      const fbScript = document.createElement("script");
+      fbScript.src = "https://connect.facebook.net/en_US/sdk.js";
+      fbScript.async = true;
+      fbScript.defer = true;
+      document.body.appendChild(fbScript);
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -26,20 +89,14 @@ const Login = () => {
 
     try {
       console.log("🔐 Attempting login with:", email);
-
-      // Use Auth Context's login function (it handles API call)
       const result = await login(email, password);
 
-      console.log("📊 Login result:", result);
-
       if (result.success && result.user) {
-        console.log("✅ Login successful! User:", result.user);
+        console.log("✅ Login successful!");
         setSuccessMsg(
           `Welcome back, ${result.user.username || result.user.email}!`
         );
         setLoading(false);
-
-        // Redirect after 1 second
         setTimeout(() => {
           navigate("/");
         }, 1000);
@@ -52,6 +109,95 @@ const Login = () => {
       setLoading(false);
       console.error("❌ Login exception:", err);
       setError("An unexpected error occurred");
+    }
+  };
+
+  const handleGoogleLogin = async (response) => {
+    console.log("🔐 Google login response received");
+
+    if (response.credential) {
+      try {
+        const token = response.credential;
+        const decoded = JSON.parse(atob(token.split(".")[1]));
+
+        console.log("👤 Google user:", decoded);
+
+        await socialLoginRequest({
+          provider: "google",
+          email: decoded.email,
+          username: decoded.name,
+          avatar: decoded.picture,
+          providerId: decoded.sub,
+        });
+      } catch (err) {
+        console.error("❌ Google token decode error:", err);
+        setError("Failed to process Google login");
+      }
+    } else {
+      setError("Google login was cancelled");
+    }
+  };
+
+  const handleFacebookLogin = () => {
+    if (!window.FB) {
+      setError("Facebook SDK not loaded. Please refresh the page.");
+      return;
+    }
+
+    window.FB.login(
+      (response) => {
+        console.log("🔐 Facebook login response:", response);
+
+        if (response.authResponse) {
+          window.FB.api(
+            "/me",
+            { fields: "id,name,email,picture" },
+            async (user) => {
+              console.log("👤 Facebook user:", user);
+
+              await socialLoginRequest({
+                provider: "facebook",
+                email: user.email,
+                username: user.name,
+                avatar: user.picture?.data?.url,
+                providerId: user.id,
+              });
+            }
+          );
+        } else {
+          setError("Facebook login cancelled");
+        }
+      },
+      { scope: "public_profile,email" }
+    );
+  };
+
+  const socialLoginRequest = async (data) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      console.log("📤 Sending social login request:", data);
+
+      const res = await api.post("/auth/social-login", data);
+
+      console.log("✅ Social login response:", res.data);
+
+      if (res.data.token && res.data.user) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        setSuccessMsg(`Welcome, ${res.data.user.username}!`);
+        setTimeout(() => navigate("/"), 1000);
+      } else {
+        setError("Login failed - invalid response");
+      }
+    } catch (err) {
+      console.error("❌ Social login error:", err);
+      setError(
+        err.response?.data?.message || "Social login failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -153,6 +299,30 @@ const Login = () => {
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
+
+          <div className="social-divider">
+            <span>Or continue with</span>
+          </div>
+
+          <div className="social-login-buttons">
+            <div
+              id="google-signin-button"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                minHeight: "45px",
+              }}
+            ></div>
+            <button
+              type="button"
+              className="btn-social facebook"
+              onClick={handleFacebookLogin}
+              disabled={loading}
+            >
+              <i className="fab fa-facebook"></i>
+              Facebook
+            </button>
+          </div>
 
           <div className="login-footer">
             <p>Don't have an account?</p>

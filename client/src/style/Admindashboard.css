@@ -333,6 +333,26 @@
   color: white;
 }
 
+.btn-action.ban {
+  background: #fff3cd;
+  color: #ff6b6b;
+}
+
+.btn-action.ban:hover {
+  background: #ff6b6b;
+  color: white;
+}
+
+.btn-action.unban {
+  background: #d4edda;
+  color: #28a745;
+}
+
+.btn-action.unban:hover {
+  background: #28a745;
+  color: white;
+}
+
 .btn {
   border: none;
   padding: 10px 20px;
@@ -484,4 +504,31 @@
   .stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.banned-user {
+  opacity: 0.7;
+  background: #fff5f5;
+}
+
+.banned-user td {
+  color: #999;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.banned {
+  background: #f8d7da;
+  color: #721c24;
 }

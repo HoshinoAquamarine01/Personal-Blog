@@ -105,6 +105,14 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // Check if user is banned
+    if (user.isBanned) {
+      console.log("🚫 Banned user attempted login:", email);
+      return res
+        .status(403)
+        .json({ message: "Your account has been banned by admin" });
+    }
+
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
@@ -120,7 +128,6 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // ✅ Return user object với _id
     res.json({
       message: "Login successful",
       token,
@@ -145,13 +152,22 @@ router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
 
+    console.log("📧 Forgot password request for:", email);
+
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
+      console.warn("❌ Email not found:", email);
       return res.status(404).json({ message: "Email not found" });
+    }
+
+    // Check if user is banned
+    if (user.isBanned) {
+      console.warn("🚫 Banned user tried password reset:", email);
+      return res.status(403).json({ message: "Your account has been banned" });
     }
 
     // Generate 6-digit code
@@ -161,6 +177,8 @@ router.post("/forgot-password", async (req, res) => {
     user.resetCode = resetCode;
     user.resetCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
+
+    console.log("✅ Reset code generated:", resetCode);
 
     // Send email with code
     const mailOptions = {
@@ -185,23 +203,26 @@ router.post("/forgot-password", async (req, res) => {
       `,
     };
 
-    const transporter = await getTransporter();
-    await transporter.sendMail(mailOptions);
+    try {
+      const transporter = await getTransporter();
+      await transporter.sendMail(mailOptions);
+      console.log("✅ Email sent successfully to:", email);
 
-    console.log("✅ Email sent successfully to:", email);
-    res.json({
-      message: "Reset code sent to your email. Code expires in 15 minutes.",
-      email: email,
-    });
+      res.json({
+        message: "Reset code sent to your email. Code expires in 15 minutes.",
+        email: email,
+      });
+    } catch (emailErr) {
+      console.error("❌ Email sending failed:", emailErr.message);
+      res.status(500).json({
+        message: "Failed to send reset code email",
+        error: emailErr.message,
+      });
+    }
   } catch (error) {
-    console.error("❌ Email sending failed:", {
-      errorCode: error.code,
-      errorMessage: error.message,
-      email: email,
-      timestamp: new Date().toISOString(),
-    });
+    console.error("❌ Forgot password error:", error);
     res.status(500).json({
-      message: "Failed to send reset code email",
+      message: "Server error",
       error: error.message,
     });
   }
@@ -301,6 +322,67 @@ router.post("/reset-password", async (req, res) => {
   } catch (error) {
     console.error("Reset password error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Social Login - Google/Facebook
+router.post("/social-login", async (req, res) => {
+  try {
+    const { provider, email, username, avatar, providerId } = req.body;
+
+    console.log("🔐 Social login:", { provider, email });
+
+    if (!provider || !email) {
+      return res.status(400).json({ message: "Provider and email required" });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user from social login
+      user = new User({
+        username: username || email.split("@")[0],
+        email,
+        avatar: avatar || "",
+        password: Math.random().toString(36).slice(-10), // Random password
+        role: "user",
+      });
+      await user.save();
+      console.log("✅ New user created via social login:", email);
+    } else if (user.isBanned) {
+      return res.status(403).json({ message: "Your account has been banned" });
+    }
+
+    // Generate token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+        username: user.username,
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      message: "Social login successful",
+      token,
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        avatar: user.avatar || "",
+        bio: user.bio || "",
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Social login error:", error);
+    res
+      .status(500)
+      .json({ message: "Social login failed", error: error.message });
   }
 });
 
