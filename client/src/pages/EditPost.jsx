@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/Authcontext";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../utils/api";
-import "../style/CreatePost.css";
 
 const EditPost = () => {
   const { user, isAdmin } = useAuth();
@@ -79,106 +78,151 @@ const EditPost = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading post...</div>;
+    return (
+      <div className="min-h-screen bg-slate-100 py-10 animate-fadeIn">
+        <div className="container max-w-4xl mx-auto">
+          <div className="flex items-center justify-center min-h-96">
+            <div className="spinner"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="create-post-page">
-      <div className="create-post-container">
-        <h1>Edit Post</h1>
-
-        {error && (
-          <div className="alert alert-error">
-            <i className="fas fa-exclamation-circle"></i> {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="post-form">
-          <div className="form-group">
-            <label>Title *</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="Enter post title"
-              required
-              disabled={saving}
-            />
+    <div className="min-h-screen bg-slate-100 py-10 animate-fadeIn">
+      <div className="container max-w-4xl mx-auto">
+        <div className="card shadow-2xl animate-slideUp">
+          {/* Header */}
+          <div className="mb-8 pb-6 border-b border-gray-200">
+            <h1 className="text-4xl font-bold text-slate-800 flex items-center gap-3">
+              <i className="fas fa-edit text-primary"></i>
+              Edit Post
+            </h1>
+            <p className="text-gray-600 mt-2">Update your post content</p>
           </div>
 
-          <div className="form-group">
-            <label>Content *</label>
-            <textarea
-              name="content"
-              value={formData.content}
-              onChange={handleChange}
-              placeholder="Write your post content"
-              rows="10"
-              required
-              disabled={saving}
-            ></textarea>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Category</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                disabled={saving}
-              >
-                <option value="General">General</option>
-                <option value="Technology">Technology</option>
-                <option value="Lifestyle">Lifestyle</option>
-                <option value="Business">Business</option>
-                <option value="Travel">Travel</option>
-                <option value="Food">Food</option>
-              </select>
+          {/* Error Message */}
+          {error && (
+            <div className="alert alert-error mb-6 animate-slideUp">
+              <i className="fas fa-exclamation-circle"></i>
+              <span>{error}</span>
             </div>
+          )}
 
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="form-group">
-              <label>Tags (comma separated)</label>
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-heading text-primary mr-2"></i>
+                Title *
+              </label>
               <input
                 type="text"
-                name="tags"
-                value={formData.tags}
+                name="title"
+                value={formData.title}
                 onChange={handleChange}
-                placeholder="tag1, tag2, tag3"
+                className="form-control"
+                placeholder="Enter post title"
+                required
                 disabled={saving}
               />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Thumbnail URL</label>
-            <input
-              type="url"
-              name="thumbnail"
-              value={formData.thumbnail}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-              disabled={saving}
-            />
-          </div>
+            <div className="form-group">
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-align-left text-primary mr-2"></i>
+                Content *
+              </label>
+              <textarea
+                name="content"
+                value={formData.content}
+                onChange={handleChange}
+                className="form-control"
+                placeholder="Write your post content"
+                rows="12"
+                required
+                disabled={saving}
+              ></textarea>
+            </div>
 
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              <i className="fas fa-save"></i>
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => navigate(`/posts/${id}`)}
-              disabled={saving}
-            >
-              <i className="fas fa-times"></i>
-              Cancel
-            </button>
-          </div>
-        </form>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="form-group">
+                <label className="flex items-center font-semibold text-gray-700 mb-2">
+                  <i className="fas fa-tag text-primary mr-2"></i>
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="filter-select"
+                  disabled={saving}
+                >
+                  <option value="General">General</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Lifestyle">Lifestyle</option>
+                  <option value="Business">Business</option>
+                  <option value="Travel">Travel</option>
+                  <option value="Food">Food</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="flex items-center font-semibold text-gray-700 mb-2">
+                  <i className="fas fa-hashtag text-primary mr-2"></i>
+                  Tags (comma separated)
+                </label>
+                <input
+                  type="text"
+                  name="tags"
+                  value={formData.tags}
+                  onChange={handleChange}
+                  className="form-control"
+                  placeholder="tag1, tag2, tag3"
+                  disabled={saving}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-image text-primary mr-2"></i>
+                Thumbnail URL
+              </label>
+              <input
+                type="url"
+                name="thumbnail"
+                value={formData.thumbnail}
+                onChange={handleChange}
+                className="form-control"
+                placeholder="https://example.com/image.jpg"
+                disabled={saving}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-6 border-t border-gray-200">
+              <button
+                type="submit"
+                className="btn btn-primary flex-1"
+                disabled={saving}
+              >
+                <i className="fas fa-save"></i>
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary flex-1"
+                onClick={() => navigate(`/posts/${id}`)}
+                disabled={saving}
+              >
+                <i className="fas fa-times"></i>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

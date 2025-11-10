@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/Authcontext";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
-import "../style/AdminDashboard.css";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 const AdminDashboard = () => {
   const { user, isAdmin, logout } = useAuth();
@@ -31,20 +40,8 @@ const AdminDashboard = () => {
       setLoading(true);
       setError("");
 
-      console.log("📊 Fetching dashboard data...");
-
-      const postsRes = await api.get("/posts").catch((err) => {
-        console.error("Posts error:", err);
-        return { data: [] };
-      });
-
-      const usersRes = await api.get("/users").catch((err) => {
-        console.error("Users error:", err);
-        return { data: [] };
-      });
-
-      console.log("✅ Posts loaded:", postsRes.data?.length || 0);
-      console.log("✅ Users loaded:", usersRes.data?.length || 0);
+      const postsRes = await api.get("/posts").catch(() => ({ data: [] }));
+      const usersRes = await api.get("/users").catch(() => ({ data: [] }));
 
       setPosts(postsRes.data || []);
       setUsers(usersRes.data || []);
@@ -59,7 +56,6 @@ const AdminDashboard = () => {
         totalViews,
       });
     } catch (err) {
-      console.error("❌ Dashboard error:", err);
       setError("Failed to load dashboard data");
     } finally {
       setLoading(false);
@@ -67,13 +63,12 @@ const AdminDashboard = () => {
   };
 
   const handleDeletePost = async (postId) => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    if (!window.confirm("Delete this post?")) return;
     try {
       await api.delete(`/posts/${postId}`);
       setPosts(posts.filter((p) => p._id !== postId));
-      alert("Post deleted successfully");
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete post");
+      alert("Failed to delete post");
     }
   };
 
@@ -83,7 +78,7 @@ const AdminDashboard = () => {
       await api.patch(`/users/${userId}/ban`);
       fetchDashboardData();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to ban user");
+      alert("Failed to ban user");
     }
   };
 
@@ -93,18 +88,17 @@ const AdminDashboard = () => {
       await api.patch(`/users/${userId}/unban`);
       fetchDashboardData();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to unban user");
+      alert("Failed to unban user");
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Delete this user? This action cannot be undone!"))
-      return;
+    if (!window.confirm("Delete this user?")) return;
     try {
       await api.delete(`/users/${userId}`);
       fetchDashboardData();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete user");
+      alert("Failed to delete user");
     }
   };
 
@@ -115,124 +109,195 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="admin-dashboard">
-        <div className="loading-spinner">
+      <div className="admin-dashboard animate-fadeIn">
+        <div className="flex items-center justify-center min-h-screen">
           <div className="spinner"></div>
-          <p>Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
+  // Chart data
+  const chartData = posts.slice(0, 10).map((post) => ({
+    name: post.title.substring(0, 15),
+    views: post.views || 0,
+    likes: post.likes || 0,
+  }));
+
   return (
-    <div className="admin-dashboard">
-      <div className="admin-header">
-        <div className="admin-title">
-          <i className="fas fa-tachometer-alt"></i>
-          <h1>Admin Dashboard</h1>
+    <div className="admin-dashboard bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="mb-8 flex justify-between items-center animate-slideUp">
+        <div>
+          <h1 className="text-4xl font-bold text-slate-800">
+            <i className="fas fa-tachometer-alt text-primary mr-3"></i>Admin
+            Dashboard
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Welcome back,{" "}
+            <span className="text-primary font-bold">{user?.username}</span>!
+          </p>
         </div>
-        <div className="admin-user-info">
-          <span>Welcome, {user?.username}!</span>
-          <button onClick={handleLogout} className="btn-logout">
-            <i className="fas fa-sign-out-alt"></i> Logout
+        <button
+          onClick={handleLogout}
+          className="btn btn-primary hover:shadow-xl"
+        >
+          <i className="fas fa-sign-out-alt mr-2"></i> Logout
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-slideUp">
+        <div className="card hover:shadow-2xl hover:-translate-y-1">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center text-blue-500">
+              <i className="fas fa-file-alt text-2xl"></i>
+            </div>
+            <div>
+              <p className="text-gray-600 text-sm font-medium">Total Posts</p>
+              <p className="text-4xl font-bold text-slate-800">
+                {stats.totalPosts}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card hover:shadow-2xl hover:-translate-y-1">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center text-purple-500">
+              <i className="fas fa-users text-2xl"></i>
+            </div>
+            <div>
+              <p className="text-gray-600 text-sm font-medium">Total Users</p>
+              <p className="text-4xl font-bold text-slate-800">
+                {stats.totalUsers}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card hover:shadow-2xl hover:-translate-y-1">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-orange-100 rounded-lg flex items-center justify-center text-orange-500">
+              <i className="fas fa-eye text-2xl"></i>
+            </div>
+            <div>
+              <p className="text-gray-600 text-sm font-medium">Total Views</p>
+              <p className="text-4xl font-bold text-slate-800">
+                {stats.totalViews}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs Navigation */}
+      <div className="flex gap-2 mb-6 bg-white p-4 rounded-lg shadow-md flex-wrap animate-slideUp">
+        {["overview", "posts", "users", "settings"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${
+              activeTab === tab
+                ? "bg-gradient-primary text-white shadow-lg"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            <i
+              className={`fas fa-${
+                tab === "overview"
+                  ? "chart-line"
+                  : tab === "posts"
+                  ? "file-alt"
+                  : tab === "users"
+                  ? "users"
+                  : "cog"
+              } mr-2`}
+            ></i>
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
-        </div>
+        ))}
       </div>
 
-      <div className="admin-nav">
-        <button
-          className={`nav-item ${activeTab === "overview" ? "active" : ""}`}
-          onClick={() => setActiveTab("overview")}
-        >
-          <i className="fas fa-chart-line"></i> Overview
-        </button>
-        <button
-          className={`nav-item ${activeTab === "posts" ? "active" : ""}`}
-          onClick={() => setActiveTab("posts")}
-        >
-          <i className="fas fa-file-alt"></i> Posts ({stats.totalPosts})
-        </button>
-        <button
-          className={`nav-item ${activeTab === "users" ? "active" : ""}`}
-          onClick={() => setActiveTab("users")}
-        >
-          <i className="fas fa-users"></i> Users ({stats.totalUsers})
-        </button>
-        <button
-          className={`nav-item ${activeTab === "settings" ? "active" : ""}`}
-          onClick={() => setActiveTab("settings")}
-        >
-          <i className="fas fa-cog"></i> Settings
-        </button>
-      </div>
-
-      <div className="admin-content">
+      {/* Content Section */}
+      <div className="bg-white rounded-lg shadow-lg p-8 animate-slideUp">
         {error && (
-          <div className="alert alert-error">
-            <i className="fas fa-exclamation-circle"></i> {error}
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded flex items-start gap-3 animate-slideUp">
+            <i className="fas fa-exclamation-circle text-red-500 text-xl mt-0.5"></i>
+            <span className="text-red-800 font-medium">{error}</span>
           </div>
         )}
 
         {/* Overview Tab */}
         {activeTab === "overview" && (
-          <div className="tab-content">
-            <h2>Dashboard Overview</h2>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon posts">
-                  <i className="fas fa-file-alt"></i>
-                </div>
-                <div className="stat-info">
-                  <h3>Total Posts</h3>
-                  <p className="stat-number">{stats.totalPosts}</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon users">
-                  <i className="fas fa-users"></i>
-                </div>
-                <div className="stat-info">
-                  <h3>Total Users</h3>
-                  <p className="stat-number">{stats.totalUsers}</p>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon views">
-                  <i className="fas fa-eye"></i>
-                </div>
-                <div className="stat-info">
-                  <h3>Total Views</h3>
-                  <p className="stat-number">{stats.totalViews}</p>
-                </div>
-              </div>
+          <div className="space-y-8">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">
+              <i className="fas fa-chart-bar text-primary mr-2"></i>Analytics
+              Overview
+            </h2>
+
+            {/* Chart */}
+            <div className="card border border-gray-200">
+              <h3 className="text-lg font-bold mb-4">📊 Posts Performance</h3>
+              {chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="views" fill="#3b82f6" />
+                    <Bar dataKey="likes" fill="#ef4444" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  No data available
+                </p>
+              )}
             </div>
 
-            <div className="recent-section">
-              <h3>Recent Posts</h3>
-              {posts.length === 0 ? (
-                <p className="no-data">No posts yet</p>
-              ) : (
-                <div className="recent-list">
+            {/* Recent Posts */}
+            <div className="card border border-gray-200">
+              <h3 className="text-lg font-bold mb-4">
+                <i className="fas fa-history text-primary mr-2"></i>Recent Posts
+              </h3>
+              {posts.length > 0 ? (
+                <div className="space-y-3">
                   {posts.slice(0, 5).map((post) => (
-                    <div key={post._id} className="recent-item">
-                      <div className="recent-info">
-                        <h4>{post.title}</h4>
-                        <p>
-                          {post.author?.username || "Unknown"} •{" "}
+                    <div
+                      key={post._id}
+                      className="flex justify-between p-4 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors animate-slideUp"
+                    >
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800">
+                          {post.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                          <i className="fas fa-user text-primary mr-1"></i>
+                          {post.author?.username} •
+                          <i className="fas fa-calendar text-primary mr-1 ml-2"></i>
                           {new Date(post.createdAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="recent-stats">
-                        <span>
-                          <i className="fas fa-eye"></i> {post.views || 0}
+                      <div className="flex gap-6 text-sm ml-4">
+                        <span className="text-blue-600 font-semibold">
+                          <i className="fas fa-eye mr-1"></i>
+                          {post.views || 0}
                         </span>
-                        <span>
-                          <i className="fas fa-heart"></i> {post.likes || 0}
+                        <span className="text-red-600 font-semibold">
+                          <i className="fas fa-heart mr-1"></i>
+                          {post.likes || 0}
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  No posts available
+                </p>
               )}
             </div>
           </div>
@@ -240,47 +305,66 @@ const AdminDashboard = () => {
 
         {/* Posts Tab */}
         {activeTab === "posts" && (
-          <div className="tab-content">
-            <div className="tab-header">
-              <h2>Manage Posts</h2>
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-slate-800">
+                <i className="fas fa-file-alt text-primary mr-2"></i>Manage
+                Posts
+              </h2>
               <button
                 onClick={() => navigate("/create-post")}
                 className="btn btn-primary"
               >
-                <i className="fas fa-plus"></i> New Post
+                <i className="fas fa-plus mr-2"></i> New Post
               </button>
             </div>
 
             {posts.length === 0 ? (
-              <p className="no-data">No posts found</p>
+              <div className="text-center py-16 text-gray-500">
+                <i className="fas fa-inbox text-6xl text-gray-300 mb-4 block"></i>
+                <p className="text-lg">No posts found</p>
+              </div>
             ) : (
-              <div className="table-responsive">
-                <table className="admin-table">
-                  <thead>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100 border-b-2 border-gray-300">
                     <tr>
-                      <th>Title</th>
-                      <th>Author</th>
-                      <th>Category</th>
-                      <th>Views</th>
-                      <th>Likes</th>
-                      <th>Created</th>
-                      <th>Actions</th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-800">
+                        Title
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-800">
+                        Author
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-800">
+                        Views
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-800">
+                        Likes
+                      </th>
+                      <th className="px-4 py-3 text-left font-bold text-gray-800">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-200">
                     {posts.map((post) => (
-                      <tr key={post._id}>
-                        <td className="title-cell">
-                          <strong>{post.title}</strong>
+                      <tr
+                        key={post._id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-4 py-3 truncate max-w-xs text-gray-800">
+                          {post.title}
                         </td>
-                        <td>{post.author?.username || "Unknown"}</td>
-                        <td>
-                          <span className="badge">{post.category}</span>
+                        <td className="px-4 py-3 text-gray-700">
+                          {post.author?.username}
                         </td>
-                        <td>{post.views || 0}</td>
-                        <td>{post.likes || 0}</td>
-                        <td>{new Date(post.createdAt).toLocaleDateString()}</td>
-                        <td className="actions-cell">
+                        <td className="px-4 py-3 font-semibold text-blue-600">
+                          {post.views || 0}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-red-600">
+                          {post.likes || 0}
+                        </td>
+                        <td className="px-4 py-3 flex gap-2">
                           <button
                             onClick={() => navigate(`/posts/${post._id}`)}
                             className="btn-action view"
@@ -314,86 +398,74 @@ const AdminDashboard = () => {
 
         {/* Users Tab */}
         {activeTab === "users" && (
-          <div className="tab-content">
-            <h2>Manage Users</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">
+              <i className="fas fa-users text-primary mr-2"></i>Manage Users
+            </h2>
             {users.length === 0 ? (
-              <p className="no-data">No users found</p>
+              <div className="text-center py-16 text-gray-500">
+                <i className="fas fa-user-slash text-6xl text-gray-300 mb-4 block"></i>
+                <p className="text-lg">No users found</p>
+              </div>
             ) : (
-              <div className="table-responsive">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Username</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                      <th>Joined</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u) => (
-                      <tr
-                        key={u._id}
-                        className={u.isBanned ? "banned-user" : ""}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {users.map((u) => (
+                  <div
+                    key={u._id}
+                    className="card border border-gray-200 hover:shadow-lg"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-bold text-lg text-gray-800">
+                          {u.username}
+                        </h4>
+                        <p className="text-sm text-gray-600">{u.email}</p>
+                      </div>
+                      <span
+                        className={`badge text-xs ${
+                          u.role === "admin"
+                            ? "bg-yellow-300 text-gray-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
                       >
-                        <td>
-                          <strong>{u.username}</strong>
-                        </td>
-                        <td>{u.email}</td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              u.role === "admin" ? "admin" : "user"
-                            }`}
-                          >
-                            {u.role}
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            className={`status-badge ${
-                              u.isBanned ? "banned" : "active"
-                            }`}
-                          >
-                            {u.isBanned ? "🚫 Banned" : "✅ Active"}
-                          </span>
-                        </td>
-                        <td>{new Date(u.createdAt).toLocaleDateString()}</td>
-                        <td className="actions-cell">
-                          {u.role !== "admin" && (
-                            <>
-                              {u.isBanned ? (
-                                <button
-                                  onClick={() => handleUnbanUser(u._id)}
-                                  className="btn-action unban"
-                                  title="Unban"
-                                >
-                                  <i className="fas fa-check"></i>
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleBanUser(u._id)}
-                                  className="btn-action ban"
-                                  title="Ban"
-                                >
-                                  <i className="fas fa-ban"></i>
-                                </button>
-                              )}
-                              <button
-                                onClick={() => handleDeleteUser(u._id)}
-                                className="btn-action delete"
-                                title="Delete"
-                              >
-                                <i className="fas fa-trash"></i>
-                              </button>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        {u.role === "admin" ? "👑 Admin" : "User"}
+                      </span>
+                    </div>
+                    <p className="text-sm mb-4">
+                      Status:{" "}
+                      <span
+                        className={`font-semibold ${
+                          u.isBanned ? "text-red-600" : "text-green-600"
+                        }`}
+                      >
+                        {u.isBanned ? "🚫 Banned" : "✅ Active"}
+                      </span>
+                    </p>
+                    <div className="flex gap-2">
+                      {u.isBanned ? (
+                        <button
+                          onClick={() => handleUnbanUser(u._id)}
+                          className="flex-1 btn btn-primary text-sm py-2"
+                        >
+                          Unban
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleBanUser(u._id)}
+                          className="flex-1 btn btn-danger text-sm py-2"
+                        >
+                          Ban
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteUser(u._id)}
+                        className="flex-1 btn btn-danger text-sm py-2"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -401,39 +473,45 @@ const AdminDashboard = () => {
 
         {/* Settings Tab */}
         {activeTab === "settings" && (
-          <div className="tab-content">
-            <h2>Settings</h2>
-            <div className="settings-grid">
-              <div className="setting-card">
-                <div className="setting-icon">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">
+              <i className="fas fa-cog text-primary mr-2"></i>Settings
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="card border border-gray-200 hover:shadow-lg">
+                <div className="text-4xl text-primary mb-3">
                   <i className="fas fa-envelope"></i>
                 </div>
-                <div className="setting-info">
-                  <h3>Email Configuration</h3>
-                  <p>Configure email settings for password reset</p>
-                  <button
-                    onClick={() => navigate("/admin/email-settings")}
-                    className="btn btn-primary"
-                  >
-                    <i className="fas fa-cog"></i> Configure Email
-                  </button>
-                </div>
+                <h3 className="font-bold text-lg mb-2 text-gray-800">
+                  Email Configuration
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Setup email for password reset
+                </p>
+                <button
+                  onClick={() => navigate("/admin/email-settings")}
+                  className="btn btn-primary w-full"
+                >
+                  <i className="fas fa-cog mr-2"></i>Configure
+                </button>
               </div>
 
-              <div className="setting-card">
-                <div className="setting-icon">
-                  <i className="fas fa-redo"></i>
+              <div className="card border border-gray-200 hover:shadow-lg">
+                <div className="text-4xl text-primary mb-3">
+                  <i className="fas fa-sync-alt"></i>
                 </div>
-                <div className="setting-info">
-                  <h3>Refresh Data</h3>
-                  <p>Reload dashboard data from server</p>
-                  <button
-                    onClick={fetchDashboardData}
-                    className="btn btn-secondary"
-                  >
-                    <i className="fas fa-sync"></i> Refresh
-                  </button>
-                </div>
+                <h3 className="font-bold text-lg mb-2 text-gray-800">
+                  Refresh Data
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Reload all dashboard data
+                </p>
+                <button
+                  onClick={fetchDashboardData}
+                  className="btn btn-secondary w-full"
+                >
+                  <i className="fas fa-sync mr-2"></i>Refresh
+                </button>
               </div>
             </div>
           </div>

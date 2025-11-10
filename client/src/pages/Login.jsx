@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import api from "../utils/api";
-import "../style/Adminlogin.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -202,58 +201,41 @@ const Login = () => {
   };
 
   return (
-    <div className="admin-login-page">
-      <div className="login-container">
-        <div className="login-box">
-          <div className="login-header">
-            <i className="fas fa-sign-in-alt"></i>
-            <h1>Login</h1>
-            <p>Welcome back to My Blog</p>
+    <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4 animate-fadeIn">
+      <div className="w-full max-w-md">
+        <div className="card shadow-2xl animate-slideInScale">
+          {/* Header */}
+          <div className="text-center mb-8 pb-6 border-b border-gray-200">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-full mb-4">
+              <i className="fas fa-sign-in-alt text-white text-2xl"></i>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              Welcome Back
+            </h1>
+            <p className="text-gray-600">Login to your account</p>
           </div>
 
+          {/* Messages */}
           {successMsg && (
-            <div
-              style={{
-                background: "#efe",
-                color: "#0a0",
-                padding: "1rem",
-                borderRadius: "8px",
-                marginBottom: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                fontSize: "0.95rem",
-              }}
-            >
+            <div className="alert alert-success mb-4 animate-slideUp">
               <i className="fas fa-check-circle"></i>
               <span>{successMsg}</span>
             </div>
           )}
 
           {error && (
-            <div
-              style={{
-                background: "#fee",
-                color: "#c00",
-                padding: "1rem",
-                borderRadius: "8px",
-                marginBottom: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                fontSize: "0.95rem",
-              }}
-            >
+            <div className="alert alert-error mb-4 animate-slideUp">
               <i className="fas fa-exclamation-circle"></i>
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="login-form">
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-5 mb-6">
             <div className="form-group">
-              <label>
-                <i className="fas fa-envelope"></i>
-                Email
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-envelope text-primary mr-2"></i>
+                Email Address
               </label>
               <input
                 type="email"
@@ -267,74 +249,76 @@ const Login = () => {
             </div>
 
             <div className="form-group">
-              <label>
-                <i className="fas fa-lock"></i>
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-lock text-primary mr-2"></i>
                 Password
               </label>
               <input
                 type="password"
                 className="form-control"
-                placeholder="Enter your password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
               />
-              <div style={{ marginTop: "0.5rem", textAlign: "right" }}>
+              <div className="mt-2 text-right">
                 <a
                   href="/forgot-password"
-                  style={{
-                    color: "#667eea",
-                    textDecoration: "none",
-                    fontSize: "0.9rem",
-                  }}
+                  className="text-primary hover:opacity-80 text-sm font-medium transition-opacity"
                 >
                   Forgot Password?
                 </a>
               </div>
             </div>
 
-            <button type="submit" className="btn-login" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary w-full"
+              disabled={loading}
+            >
               <i className="fas fa-sign-in-alt"></i>
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
 
-          <div className="social-divider">
-            <span>Or continue with</span>
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">
+                Or continue with
+              </span>
+            </div>
           </div>
 
-          <div className="social-login-buttons">
+          {/* Social Buttons */}
+          <div className="space-y-3 mb-6">
             <div
               id="google-signin-button"
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                minHeight: "45px",
-              }}
+              className="flex justify-center"
             ></div>
             <button
               type="button"
-              className="btn-social facebook"
               onClick={handleFacebookLogin}
               disabled={loading}
+              className="btn bg-blue-600 hover:bg-blue-700 text-white w-full"
             >
               <i className="fab fa-facebook"></i>
               Facebook
             </button>
           </div>
 
-          <div className="login-footer">
-            <p>Don't have an account?</p>
+          {/* Footer */}
+          <div className="text-center pt-6 border-t border-gray-200">
+            <p className="text-gray-600 mb-2">Don't have an account?</p>
             <a
               href="/register"
-              style={{
-                color: "#667eea",
-                textDecoration: "none",
-                fontWeight: "600",
-              }}
+              className="text-primary hover:opacity-80 font-semibold transition-opacity"
             >
-              Register here
+              Create one here
             </a>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/Authcontext";
 import { useNavigate } from "react-router-dom";
-import "../style/Adminlogin.css";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -29,38 +28,19 @@ const ForgotPassword = () => {
 
   if (success) {
     return (
-      <div className="admin-login-page">
-        <div className="login-container">
-          <div className="login-box">
-            <div
-              style={{
-                background: "#efe",
-                color: "#0a0",
-                padding: "2rem",
-                borderRadius: "8px",
-                textAlign: "center",
-              }}
-            >
-              <i
-                className="fas fa-check-circle"
-                style={{
-                  fontSize: "3rem",
-                  marginBottom: "1rem",
-                  display: "block",
-                }}
-              ></i>
-              <h2 style={{ margin: "0.5rem 0", color: "#0a0" }}>
-                ✅ Code Sent!
-              </h2>
-              <p style={{ margin: "0.5rem 0", marginBottom: "1rem" }}>
-                Check your email for the reset code.
-              </p>
-              <p
-                style={{ margin: "0.5rem 0", fontSize: "0.9rem", opacity: 0.8 }}
-              >
-                Redirecting to reset password...
-              </p>
-            </div>
+      <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4 animate-fadeIn">
+        <div className="w-full max-w-md">
+          <div className="card shadow-2xl text-center animate-slideInScale">
+            <i className="fas fa-check-circle text-6xl text-green-500 mb-4 block"></i>
+            <h2 className="text-3xl font-bold text-green-600 mb-2">
+              Code Sent!
+            </h2>
+            <p className="text-gray-600 mb-2">
+              Check your email for the reset code.
+            </p>
+            <p className="text-sm text-gray-500">
+              Redirecting to reset password...
+            </p>
           </div>
         </div>
       </div>
@@ -68,38 +48,33 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="admin-login-page">
-      <div className="login-container">
-        <div className="login-box">
-          <div className="login-header">
-            <i className="fas fa-key"></i>
-            <h1>Forgot Password</h1>
-            <p>Enter your email to reset password</p>
+    <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4 animate-fadeIn">
+      <div className="w-full max-w-md">
+        <div className="card shadow-2xl animate-slideInScale">
+          {/* Header */}
+          <div className="text-center mb-8 pb-6 border-b border-gray-200">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-full mb-4">
+              <i className="fas fa-key text-white text-2xl"></i>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              Forgot Password
+            </h1>
+            <p className="text-gray-600">Enter your email to reset password</p>
           </div>
 
+          {/* Error Message */}
           {error && (
-            <div
-              style={{
-                background: "#fee",
-                color: "#c00",
-                padding: "1rem",
-                borderRadius: "8px",
-                marginBottom: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                fontSize: "0.95rem",
-              }}
-            >
+            <div className="alert alert-error mb-4 animate-slideUp">
               <i className="fas fa-exclamation-circle"></i>
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="login-form">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5 mb-6">
             <div className="form-group">
-              <label>
-                <i className="fas fa-envelope"></i>
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-envelope text-primary mr-2"></i>
                 Email Address
               </label>
               <input
@@ -113,21 +88,22 @@ const ForgotPassword = () => {
               />
             </div>
 
-            <button type="submit" className="btn-login" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary w-full"
+              disabled={loading}
+            >
               <i className="fas fa-paper-plane"></i>
               {loading ? "Sending..." : "Send Reset Code"}
             </button>
           </form>
 
-          <div className="login-footer">
-            <p>Remember your password?</p>
+          {/* Footer */}
+          <div className="text-center pt-6 border-t border-gray-200">
+            <p className="text-gray-600 mb-2">Remember your password?</p>
             <a
               href="/login"
-              style={{
-                color: "#667eea",
-                textDecoration: "none",
-                fontWeight: "600",
-              }}
+              className="text-primary hover:opacity-80 font-semibold transition-opacity"
             >
               Login here
             </a>

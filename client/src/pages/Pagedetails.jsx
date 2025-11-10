@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/Authcontext';
-import '../style/Pagedetails.css';
+
 
 const PostDetail = () => {
   const { id } = useParams();

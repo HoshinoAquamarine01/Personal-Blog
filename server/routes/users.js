@@ -4,6 +4,28 @@ import { verifyToken, verifyAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
+// Search users by username
+router.get("/search", verifyToken, async (req, res) => {
+  try {
+    const { username } = req.query;
+
+    if (!username || username.trim() === "") {
+      return res.json({ users: [] });
+    }
+
+    const users = await User.find({
+      _id: { $ne: req.userId },
+      username: { $regex: username, $options: "i" },
+    })
+      .select("username email avatar bio role")
+      .limit(10);
+
+    res.json({ users });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get all users (admin only)
 router.get("/", verifyToken, verifyAdmin, async (req, res) => {
   try {
