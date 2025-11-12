@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
 
 const CreatePost = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isManager } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
@@ -17,9 +17,8 @@ const CreatePost = () => {
   const [error, setError] = useState("");
 
   React.useEffect(() => {
-    console.log("🔍 User info:", { user, isAdmin: isAdmin() });
-    if (!user || !isAdmin()) {
-      console.error("❌ User is not admin, redirecting...");
+    const hasAccess = user && (isAdmin() || user.role === "manager");
+    if (!hasAccess) {
       navigate("/");
     }
   }, [user]);
@@ -81,8 +80,13 @@ const CreatePost = () => {
       const res = await api.post("/posts", payload);
 
       console.log("✅ Post created successfully:", res.data);
-      alert("Post created successfully!");
-      navigate(`/posts/${res.data._id}`);
+      if (user.role === "manager") {
+        alert("Post submitted successfully! It will be visible after admin approval.");
+        navigate("/manager/dashboard");
+      } else {
+        alert("Post created successfully!");
+        navigate(`/posts/${res.data._id}`);
+      }
     } catch (err) {
       console.error("❌ Error response:", {
         status: err.response?.status,
@@ -109,6 +113,14 @@ const CreatePost = () => {
               Create New Post
             </h1>
             <p className="text-gray-600 mt-2">Share your amazing story</p>
+            {user?.role === "manager" && (
+              <div className="mt-4 p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+                <p className="text-sm text-orange-800">
+                  <i className="fas fa-info-circle mr-2"></i>
+                  <strong>Manager Note:</strong> Your post will be submitted for admin approval before being published.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Error Message */}
@@ -223,7 +235,7 @@ const CreatePost = () => {
               <button
                 type="button"
                 className="btn btn-secondary flex-1"
-                onClick={() => navigate("/admin/dashboard")}
+                onClick={() => navigate(user?.role === "manager" ? "/manager/dashboard" : "/admin/dashboard")}
                 disabled={loading}
               >
                 <i className="fas fa-times"></i>

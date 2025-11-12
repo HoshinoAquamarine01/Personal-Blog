@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/Authcontext';
+import { getImageUrl } from '../utils/imageHelper';
 
 
 const PostDetail = () => {
@@ -106,8 +107,13 @@ const PostDetail = () => {
         </div>
         
         <div className="post-meta">
-          <span className="post-author">
-            <i className="fas fa-user"></i> {post.author?.username || post.author || 'Anonymous'}
+          <span className="post-author flex items-center gap-2">
+            <img
+              src={getImageUrl(post.author?.avatar) || "https://via.placeholder.com/40"}
+              alt={post.author?.username}
+              className="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
+            />
+            <span>{post.author?.username || post.author || 'Anonymous'}</span>
           </span>
           <span className="post-date">
             <i className="fas fa-calendar"></i> {formatDate(post.createdAt)}

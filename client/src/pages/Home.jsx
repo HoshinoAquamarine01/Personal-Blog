@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import PostCard from "../component/Postcard";
 
@@ -17,6 +17,7 @@ const Home = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12;
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPosts();
@@ -148,6 +149,8 @@ const Home = () => {
   return (
     <div className="home-page animate-fadeIn">
       <div className="container">
+        <div className="flex gap-6">
+          <div className="flex-1">
         {/* Header Section */}
         <div className="mb-12 text-center animate-slideUp">
           <h1 className="text-5xl font-bold text-slate-800 mb-4">
@@ -352,6 +355,63 @@ const Home = () => {
             )}
           </>
         )}
+          </div>
+
+          {/* Latest Posts Sidebar */}
+          <div className="hidden lg:block w-80">
+            <div className="sticky top-4 space-y-4">
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  <i className="fas fa-clock text-primary"></i>
+                  Latest Posts
+                </h3>
+                <div className="space-y-3">
+                  {posts.slice(0, 5).map((post) => (
+                    <div
+                      key={post._id}
+                      onClick={() => navigate(`/posts/${post._id}`)}
+                      className="p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors border border-gray-200"
+                    >
+                      <h4 className="font-semibold text-sm text-gray-800 line-clamp-2 mb-2">
+                        {post.title}
+                      </h4>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <span>
+                          <i className="fas fa-user mr-1 text-primary"></i>
+                          {post.author?.username}
+                        </span>
+                        <span>
+                          <i className="fas fa-eye mr-1 text-blue-600"></i>
+                          {post.views || 0}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Popular Categories */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  <i className="fas fa-folder text-primary"></i>
+                  Categories
+                </h3>
+                <div className="space-y-2">
+                  {categories.filter(c => c !== "All").slice(0, 5).map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm text-gray-700 hover:text-primary font-medium"
+                    >
+                      <i className="fas fa-tag mr-2 text-primary"></i>
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

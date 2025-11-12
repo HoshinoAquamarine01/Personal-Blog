@@ -52,6 +52,15 @@ const PostSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  isApproved: {
+    type: Boolean,
+    default: true,
+  },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
   views: {
     type: Number,
     default: 0,

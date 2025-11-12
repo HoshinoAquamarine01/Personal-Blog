@@ -1,14 +1,16 @@
 import express from "express";
 import Post from "../model/Post.js";
-import { verifyToken, verifyAdmin } from "../middleware/auth.js";
+import { verifyToken, verifyAdmin, verifyManager } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // Get all posts (public)
 router.get("/", async (req, res) => {
   try {
-    const posts = await Post.find()
-      .populate("author", "username email role")
+    const posts = await Post.find({
+      $or: [{ isApproved: true }, { isApproved: { $exists: false } }]
+    })
+      .populate("author", "username email role avatar")
       .sort({ createdAt: -1 });
     res.json(posts);
   } catch (error) {
@@ -18,12 +20,36 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get my posts (manager)
+router.get("/my-posts", verifyToken, verifyManager, async (req, res) => {
+  try {
+    const posts = await Post.find({ author: req.user.id })
+      .populate("author", "username email role avatar")
+      .sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching my posts", error: error.message });
+  }
+});
+
+// Get pending posts (admin only)
+router.get("/pending", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const posts = await Post.find({ isApproved: false })
+      .populate("author", "username email role avatar")
+      .sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching pending posts", error: error.message });
+  }
+});
+
 // Get post by ID (public)
 router.get("/:id", async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
-      .populate("author", "username email role")
-      .populate("comments.author", "username email role");
+      .populate("author", "username email role avatar")
+      .populate("comments.author", "username email role avatar");
 
     if (!post) return res.status(404).json({ message: "Post not found" });
 
@@ -35,8 +61,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Create post (admin only)
-router.post("/", verifyToken, verifyAdmin, async (req, res) => {
+// Create post (manager and admin)
+router.post("/", verifyToken, verifyManager, async (req, res) => {
   try {
     console.log("📝 CREATE POST REQUEST");
     console.log("Body:", req.body);
@@ -82,6 +108,7 @@ router.post("/", verifyToken, verifyAdmin, async (req, res) => {
       author: req.user.id,
     });
 
+    const isManager = req.user.role === "manager";
     const newPost = new Post({
       title: cleanTitle,
       content: cleanContent,
@@ -90,13 +117,15 @@ router.post("/", verifyToken, verifyAdmin, async (req, res) => {
       thumbnail: cleanThumbnail,
       author: req.user.id,
       isPublished: true,
+      isApproved: !isManager,
+      approvedBy: isManager ? null : req.user.id,
     });
 
     console.log("💾 Saving post...");
     const savedPost = await newPost.save();
     console.log("✅ Post saved:", savedPost._id);
 
-    await savedPost.populate("author", "username email");
+    await savedPost.populate("author", "username email avatar");
     console.log("✅ Post populated");
 
     res.status(201).json(savedPost);
@@ -131,7 +160,7 @@ router.put("/:id", verifyToken, verifyAdmin, async (req, res) => {
         isPublished,
       },
       { new: true, runValidators: true }
-    ).populate("author", "username email");
+    ).populate("author", "username email avatar");
 
     if (!post) return res.status(404).json({ message: "Post not found" });
 
@@ -143,8 +172,25 @@ router.put("/:id", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
-// Delete post (admin only)
-router.delete("/:id", verifyToken, verifyAdmin, async (req, res) => {
+// Approve post (admin only)
+router.patch("/:id/approve", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { isApproved: true, approvedBy: req.user.id },
+      { new: true }
+    ).populate("author", "username email role avatar");
+
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    res.json(post);
+  } catch (error) {
+    res.status(500).json({ message: "Error approving post", error: error.message });
+  }
+});
+
+// Delete post (manager and admin)
+router.delete("/:id", verifyToken, verifyManager, async (req, res) => {
   try {
     const post = await Post.findByIdAndDelete(req.params.id);
 
@@ -176,8 +222,8 @@ router.post("/:id/comments", verifyToken, async (req, res) => {
     });
 
     await post.save();
-    await post.populate("author", "username email role");
-    await post.populate("comments.author", "username email role");
+    await post.populate("author", "username email role avatar");
+    await post.populate("comments.author", "username email role avatar");
 
     res.status(201).json(post);
   } catch (error) {
@@ -210,8 +256,8 @@ router.delete("/:id/comments/:commentId", verifyToken, async (req, res) => {
     await post.save();
 
     // Populate author data before sending response
-    await post.populate("author", "username email role");
-    await post.populate("comments.author", "username email role");
+    await post.populate("author", "username email role avatar");
+    await post.populate("comments.author", "username email role avatar");
 
     res.json({ message: "Comment deleted successfully", post });
   } catch (error) {
@@ -228,7 +274,7 @@ router.patch("/:id/views", async (req, res) => {
       req.params.id,
       { $inc: { views: 1 } },
       { new: true }
-    ).populate("author", "username email");
+    ).populate("author", "username email avatar");
 
     if (!post) return res.status(404).json({ message: "Post not found" });
 
@@ -247,7 +293,7 @@ router.patch("/:id/like", async (req, res) => {
       req.params.id,
       { $inc: { likes: 1 } },
       { new: true }
-    ).populate("author", "username email");
+    ).populate("author", "username email avatar");
 
     if (!post) return res.status(404).json({ message: "Post not found" });
 

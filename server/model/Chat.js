@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const chatSchema = new mongoose.Schema(
+const ChatSchema = new mongoose.Schema(
   {
     sender: {
       type: mongoose.Schema.Types.ObjectId,
@@ -14,8 +14,8 @@ const chatSchema = new mongoose.Schema(
     },
     message: {
       type: String,
-      required: true,
-      maxlength: 1000,
+      trim: true,
+      default: "",
     },
     fileUrl: {
       type: String,
@@ -25,16 +25,14 @@ const chatSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    isRead: {
-      type: Boolean,
-      default: false,
-    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-chatSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
+ChatSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
 
-const Chat = mongoose.model("Chat", chatSchema);
+const Chat = mongoose.models.Chat || mongoose.model("Chat", ChatSchema);
 
 export default Chat;

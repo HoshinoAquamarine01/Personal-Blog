@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../utils/imageHelper";
 
 const PostCard = ({ post, onTagClick }) => {
   const navigate = useNavigate();
@@ -48,11 +49,13 @@ const PostCard = ({ post, onTagClick }) => {
       {/* Content */}
       <div className="flex flex-col flex-1 p-5">
         {/* Author & Date */}
-        <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-3 pb-3 border-gray-200">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-              {post.author?.username?.charAt(0).toUpperCase() || "U"}
-            </div>
+            <img
+              src={getImageUrl(post.author?.avatar) || "https://via.placeholder.com/32"}
+              alt={post.author?.username}
+              className="w-8 h-8 rounded-full object-cover border-2 border-blue-200"
+            />
             <div className="text-xs">
               <p className="font-semibold text-gray-800 truncate">
                 {post.author?.username || "Unknown"}
