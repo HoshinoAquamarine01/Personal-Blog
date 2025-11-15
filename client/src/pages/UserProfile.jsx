@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
 import api from "../utils/api";
+import { getImageUrl } from "../utils/imageHelper";
 import ChangeAvatarModal from "../component/ChangeAvatarModal";
 import ChangeCoverModal from "../component/ChangeCoverModal";
 
 const Profile = () => {
-  const { userId } = useParams();
+  const { userId: urlUserId } = useParams();
   const { user: currentUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState(null);
@@ -16,46 +17,45 @@ const Profile = () => {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showCoverModal, setShowCoverModal] = useState(false);
 
-  // Fix: Nếu không có userId, dùng currentUser._id
-  const profileId = userId || currentUser?._id;
+  const profileId = urlUserId;
 
   useEffect(() => {
     const fetchProfile = async () => {
       if (!profileId) {
-        console.log("Waiting for user ID...");
         return;
       }
 
       try {
         setLoading(true);
-        console.log("Fetching profile for ID:", profileId);
+        setError("");
 
         const res = await api.get(`/users/${profileId}`);
-        console.log("Profile data:", res.data);
-        setUserProfile(res.data.user || res.data);
+        setUserProfile(res.data);
 
-        // Fetch user's posts
         const postsRes = await api.get(`/posts?author=${profileId}`);
-        setUserPosts(postsRes.data.posts || []);
+        setUserPosts(postsRes.data || []);
       } catch (err) {
-        console.error("Error fetching profile:", err);
         setError(err.response?.data?.message || "Không thể tải hồ sơ");
       } finally {
         setLoading(false);
       }
     };
 
-    if (!authLoading) {
-      fetchProfile();
-    }
-  }, [profileId, authLoading]);
+    fetchProfile();
+  }, [profileId]);
 
   const handleAvatarChange = (newAvatarUrl) => {
     setUserProfile({ ...userProfile, avatar: newAvatarUrl });
+    if (currentUser?._id === userProfile._id) {
+      window.location.reload();
+    }
   };
 
   const handleCoverChange = (newCoverUrl) => {
     setUserProfile({ ...userProfile, coverImage: newCoverUrl });
+    if (currentUser?._id === userProfile._id) {
+      window.location.reload();
+    }
   };
 
   if (authLoading || loading) {
@@ -94,7 +94,7 @@ const Profile = () => {
         <div className="profile-cover" style={{ position: "relative" }}>
           <img
             src={
-              userProfile.coverImage || "https://via.placeholder.com/1200x300"
+              getImageUrl(userProfile.coverImage) || "https://via.placeholder.com/1200x300"
             }
             alt="Cover"
             className="cover-image"
@@ -156,7 +156,7 @@ const Profile = () => {
           <div className="profile-avatar-section">
             <img
               src={
-                userProfile.avatar ||
+                getImageUrl(userProfile.avatar) ||
                 "https://via.placeholder.com/150?text=Avatar"
               }
               alt="Avatar"
@@ -201,8 +201,14 @@ const Profile = () => {
                 {userPosts.length} bài viết
               </span>
               <span className={`role-badge role-${userProfile.role}`}>
-                {userProfile.role === "admin" ? "👑 Admin" : "👤 User"}
+                {userProfile.role === "admin" ? "👑 Admin" : userProfile.role === "manager" ? "👔 Manager" : "👤 User"}
               </span>
+              {userProfile.isVip && userProfile.vipExpiresAt && (
+                <span className="px-3 py-1 rounded-full text-sm font-bold bg-linear-to-r from-yellow-400 to-orange-500 text-white">
+                  <i className="fas fa-crown mr-1"></i>
+                  VIP ({Math.max(0, Math.ceil((new Date(userProfile.vipExpiresAt) - new Date()) / (1000 * 60 * 60 * 24)))} ngày)
+                </span>
+              )}
             </div>
 
             {/* Luôn hiển thị Bio */}

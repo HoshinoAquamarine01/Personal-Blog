@@ -1,8 +1,31 @@
 import express from "express";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import User from "../model/User.js";
-import { verifyToken, verifyAdmin } from "../middleware/auth.js";
+import { verifyToken, verifyAdmin, verifyManager } from "../middleware/auth.js";
 
 const router = express.Router();
+
+// Setup multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = "./uploads/users";
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "user-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 // Search users by username
 router.get("/search", verifyToken, async (req, res) => {
@@ -26,8 +49,8 @@ router.get("/search", verifyToken, async (req, res) => {
   }
 });
 
-// Get all users (admin only)
-router.get("/", verifyToken, verifyAdmin, async (req, res) => {
+// Get all users (manager and admin)
+router.get("/", verifyToken, verifyManager, async (req, res) => {
   try {
     const users = await User.find().select("-password");
     res.json(users);
@@ -75,25 +98,57 @@ router.put("/:id", verifyToken, async (req, res) => {
   }
 });
 
-// Update avatar
-router.patch("/:id/avatar", verifyToken, async (req, res) => {
+// Upload avatar
+router.post("/avatar", verifyToken, upload.single("avatar"), async (req, res) => {
   try {
-    const { avatar } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const avatarUrl = `/uploads/users/${req.file.filename}`;
     const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { avatar },
+      req.userId,
+      { avatar: avatarUrl },
       { new: true }
     ).select("-password");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    res.json({ message: "Avatar updated", user });
+    res.json({ avatar: avatarUrl, user });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating avatar", error: error.message });
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Upload cover image
+router.post("/cover", verifyToken, upload.single("cover"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const coverUrl = `/uploads/users/${req.file.filename}`;
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { coverImage: coverUrl },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({ coverImage: coverUrl, user });
+  } catch (error) {
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -127,8 +182,8 @@ router.post("/:id/change-password", verifyToken, async (req, res) => {
   }
 });
 
-// Ban user (admin only)
-router.patch("/:id/ban", verifyToken, verifyAdmin, async (req, res) => {
+// Ban user (manager and admin)
+router.patch("/:id/ban", verifyToken, verifyManager, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -138,6 +193,11 @@ router.patch("/:id/ban", verifyToken, verifyAdmin, async (req, res) => {
     // Prevent banning admin
     if (user.role === "admin") {
       return res.status(403).json({ message: "Cannot ban admin users" });
+    }
+
+    // Manager cannot ban other managers
+    if (req.user.role === "manager" && user.role === "manager") {
+      return res.status(403).json({ message: "Cannot ban other managers" });
     }
 
     user.isBanned = true;
@@ -151,8 +211,8 @@ router.patch("/:id/ban", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
-// Unban user (admin only)
-router.patch("/:id/unban", verifyToken, verifyAdmin, async (req, res) => {
+// Unban user (manager and admin)
+router.patch("/:id/unban", verifyToken, verifyManager, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -170,8 +230,8 @@ router.patch("/:id/unban", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
-// Delete user (admin only)
-router.delete("/:id", verifyToken, verifyAdmin, async (req, res) => {
+// Delete user (manager and admin)
+router.delete("/:id", verifyToken, verifyManager, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -181,6 +241,11 @@ router.delete("/:id", verifyToken, verifyAdmin, async (req, res) => {
     // Prevent deleting admin
     if (user.role === "admin") {
       return res.status(403).json({ message: "Cannot delete admin users" });
+    }
+
+    // Manager cannot delete other managers
+    if (req.user.role === "manager" && user.role === "manager") {
+      return res.status(403).json({ message: "Cannot delete other managers" });
     }
 
     await User.findByIdAndDelete(req.params.id);

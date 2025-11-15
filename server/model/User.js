@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "manager", "admin"],
       default: "user",
     },
     bio: {
@@ -37,6 +37,11 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
     avatar: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    coverImage: {
       type: String,
       trim: true,
       default: "",
@@ -52,6 +57,31 @@ const UserSchema = new mongoose.Schema(
     isBanned: {
       type: Boolean,
       default: false,
+    },
+    isVip: {
+      type: Boolean,
+      default: false,
+    },
+    vipExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    theme: {
+      type: String,
+      enum: ["light", "dark"],
+      default: "light",
+    },
+    coins: {
+      type: Number,
+      default: 0,
+    },
+    ownedEffects: {
+      type: [String],
+      default: [],
+    },
+    activeEffect: {
+      type: String,
+      default: null,
     },
   },
   {

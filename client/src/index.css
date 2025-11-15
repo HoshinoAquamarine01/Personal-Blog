@@ -19,6 +19,147 @@
     background-color: rgb(226 232 240);
     color: rgb(31 41 55);
     font-family: "Be Vietnam Pro", system-ui, -apple-system, sans-serif;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  [data-theme="dark"] body {
+    background-color: rgb(17 24 39);
+    color: rgb(229 231 235);
+  }
+
+  [data-theme="dark"] .card {
+    background-color: rgb(31 41 55);
+    color: rgb(229 231 235);
+  }
+
+  [data-theme="dark"] .form-control {
+    background-color: rgb(55 65 81);
+    color: rgb(229 231 235);
+    border-color: rgb(75 85 99);
+  }
+
+  [data-theme="dark"] .post-card {
+    background-color: rgb(31 41 55);
+  }
+
+  [data-theme="dark"] h1,
+  [data-theme="dark"] h2,
+  [data-theme="dark"] h3,
+  [data-theme="dark"] h4,
+  [data-theme="dark"] h5,
+  [data-theme="dark"] h6 {
+    color: rgb(229 231 235);
+  }
+
+  [data-theme="dark"] .profile-header-section,
+  [data-theme="dark"] .profile-posts-section,
+  [data-theme="dark"] .profile-additional {
+    background-color: rgb(31 41 55);
+  }
+
+  [data-theme="dark"] .stat-card {
+    background-color: rgb(31 41 55);
+  }
+
+  [data-theme="dark"] .post-item {
+    background-color: rgb(55 65 81);
+    border-color: rgb(75 85 99);
+  }
+
+  [data-theme="dark"] .admin-dashboard {
+    background-color: rgb(17 24 39);
+  }
+
+  [data-theme="dark"] .btn-secondary {
+    background-color: rgb(55 65 81);
+    color: rgb(229 231 235);
+    border-color: rgb(75 85 99);
+  }
+
+  [data-theme="dark"] .btn-secondary:hover {
+    background-color: rgb(75 85 99);
+  }
+
+  [data-theme="dark"] .alert-error {
+    background-color: rgb(127 29 29);
+    color: rgb(254 242 242);
+  }
+
+  [data-theme="dark"] .alert-success {
+    background-color: rgb(22 101 52);
+    color: rgb(240 253 244);
+  }
+
+  [data-theme="dark"] .post-detail-page {
+    background-color: rgb(17 24 39);
+  }
+
+  [data-theme="dark"] .post-detail-container {
+    background-color: rgb(31 41 55);
+  }
+
+  [data-theme="dark"] .post-header {
+    background: linear-gradient(to right, rgb(30 41 59), rgb(51 65 85));
+  }
+
+  [data-theme="dark"] .post-content {
+    color: rgb(229 231 235);
+  }
+
+  [data-theme="dark"] .comment-item {
+    background-color: rgb(55 65 81);
+    border-left-color: rgb(96 165 250);
+  }
+
+  [data-theme="dark"] .comment-item:hover {
+    background-color: rgb(75 85 99);
+  }
+
+  [data-theme="dark"] .modal-content {
+    background-color: rgb(31 41 55);
+  }
+
+  [data-theme="dark"] .modal-body {
+    background-color: rgb(31 41 55);
+  }
+
+  [data-theme="dark"] .modal-footer {
+    background-color: rgb(55 65 81);
+    border-top-color: rgb(75 85 99);
+  }
+
+  [data-theme="dark"] .pagination {
+    background-color: rgb(31 41 55);
+  }
+
+  [data-theme="dark"] .filter-select,
+  [data-theme="dark"] .search-input {
+    background-color: rgb(55 65 81);
+    color: rgb(229 231 235);
+    border-color: rgb(75 85 99);
+  }
+
+  [data-theme="dark"] .badge {
+    background-color: rgb(55 65 81);
+    color: rgb(229 231 235);
+  }
+
+  [data-theme="dark"] .tag {
+    background-color: rgb(55 65 81);
+    color: rgb(147 197 253);
+  }
+
+  [data-theme="dark"] .tag:hover {
+    background-color: rgb(37 99 235);
+    color: white;
+  }
+
+  [data-theme="dark"] .navbar {
+    background-color: rgb(30 41 59);
+  }
+
+  [data-theme="dark"] .footer {
+    background-color: rgb(15 23 42);
   }
 
   h1,
@@ -79,13 +220,12 @@
   }
 
   .btn-primary {
-    background-color: rgb(37 99 235);
-    color: white;
+    background-color: rgb(37 99 235) !important;
+    color: white !important;
   }
 
   .btn-primary:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    background-color: rgb(29 78 216);
   }
 
   .btn-secondary {

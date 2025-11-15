@@ -306,6 +306,12 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   };
 
+  // Update user in context
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   const value = {
     user,
     isAuthenticated,
@@ -322,6 +328,7 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     getToken,
     clearError,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

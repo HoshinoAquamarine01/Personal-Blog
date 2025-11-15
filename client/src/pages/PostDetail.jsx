@@ -324,7 +324,10 @@ const PostDetail = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">By</p>
-                  <p className="font-bold text-gray-800 hover:text-primary cursor-pointer transition-colors">
+                  <p 
+                    onClick={() => navigate(`/profile/${post.author?._id}`)}
+                    className="font-bold text-gray-800 hover:text-primary cursor-pointer transition-colors"
+                  >
                     {post.author?.username || "Unknown"}
                   </p>
                 </div>
@@ -583,7 +586,10 @@ const PostDetail = () => {
                       {/* Author Info */}
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <strong className="text-gray-800">
+                          <strong 
+                            onClick={() => navigate(`/profile/${comment.author?._id}`)}
+                            className="text-gray-800 hover:text-primary cursor-pointer transition-colors"
+                          >
                             {comment.author?.username || "Unknown"}
                           </strong>
                           {comment.author?.role === "admin" && (
@@ -760,7 +766,10 @@ const PostDetail = () => {
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <strong className="text-sm text-gray-800">
+                                  <strong 
+                                    onClick={() => navigate(`/profile/${reply.author?._id}`)}
+                                    className="text-sm text-gray-800 hover:text-primary cursor-pointer transition-colors"
+                                  >
                                     {reply.author?.username || "Unknown"}
                                   </strong>
                                   {reply.author?.role === "admin" && (

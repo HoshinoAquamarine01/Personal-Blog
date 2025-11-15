@@ -188,6 +188,36 @@ const Register = () => {
             </button>
           </form>
 
+          {/* Social Login */}
+          <div className="mb-6">
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`}
+                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <i className="fab fa-google text-red-500"></i>
+                <span className="font-medium text-gray-700">Google</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/facebook`}
+                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <i className="fab fa-facebook text-blue-600"></i>
+                <span className="font-medium text-gray-700">Facebook</span>
+              </button>
+            </div>
+          </div>
+
           {/* Footer */}
           <div className="text-center pt-6 border-t border-gray-200">
             <p className="text-gray-600 mb-2">Already have an account?</p>

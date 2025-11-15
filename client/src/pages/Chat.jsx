@@ -70,10 +70,7 @@ const Chat = () => {
 
       setMessages([...messages, res.data.message]);
       setNewMessage("");
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      clearFileInput();
     } catch (error) {
       console.error("Error sending message:", error);
       alert(error.response?.data?.error || "Không thể gửi tin nhắn");
@@ -87,9 +84,17 @@ const Chat = () => {
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
         alert("File không được lớn hơn 10MB");
+        e.target.value = "";
         return;
       }
       setSelectedFile(file);
+    }
+  };
+
+  const clearFileInput = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
     }
   };
 
@@ -98,6 +103,38 @@ const Chat = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const getFileIcon = (fileType, isSender) => {
+    const senderBg = 'bg-slate-700/30';
+    const receiverBgs = {
+      pdf: 'bg-red-100/50',
+      word: 'bg-blue-100/50',
+      excel: 'bg-green-100/50',
+      powerpoint: 'bg-orange-100/50',
+      text: 'bg-gray-100/50',
+      default: 'bg-gray-100/50'
+    };
+
+    if (fileType?.includes('pdf')) return { icon: 'fa-file-pdf', color: isSender ? 'text-red-200' : 'text-red-600', bg: isSender ? senderBg : receiverBgs.pdf };
+    if (fileType?.includes('word') || fileType?.includes('document')) return { icon: 'fa-file-word', color: isSender ? 'text-blue-200' : 'text-blue-600', bg: isSender ? senderBg : receiverBgs.word };
+    if (fileType?.includes('excel') || fileType?.includes('sheet')) return { icon: 'fa-file-excel', color: isSender ? 'text-green-200' : 'text-green-600', bg: isSender ? senderBg : receiverBgs.excel };
+    if (fileType?.includes('powerpoint') || fileType?.includes('presentation')) return { icon: 'fa-file-powerpoint', color: isSender ? 'text-orange-200' : 'text-orange-600', bg: isSender ? senderBg : receiverBgs.powerpoint };
+    if (fileType?.includes('text')) return { icon: 'fa-file-alt', color: isSender ? 'text-gray-200' : 'text-gray-600', bg: isSender ? senderBg : receiverBgs.text };
+    return { icon: 'fa-file', color: isSender ? 'text-gray-200' : 'text-gray-600', bg: isSender ? senderBg : receiverBgs.default };
+  };
+
+  const getFileName = (fileUrl) => {
+    if (!fileUrl) return 'File';
+    const parts = fileUrl.split('/');
+    return parts[parts.length - 1];
+  };
+
+  const getFileUrl = (fileUrl) => {
+    if (!fileUrl) return '';
+    if (fileUrl.startsWith('http')) return fileUrl;
+    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    return `${baseUrl}${fileUrl}`;
   };
 
   if (loading) {
@@ -109,14 +146,14 @@ const Chat = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-50">
       {/* Chat Container */}
       <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full bg-white shadow-lg">
         {/* Chat Header */}
-        <div className="bg-blue-600 text-white p-4 flex items-center gap-4 shadow-md">
+        <div className="bg-linear-to-r from-slate-700 to-slate-600 text-white p-4 flex items-center gap-4 shadow-md">
           <button
             onClick={() => navigate(-1)}
-            className="text-white hover:bg-blue-700 p-2 rounded-lg transition-colors"
+            className="text-white hover:bg-slate-800 p-2 rounded-lg transition-colors"
           >
             <i className="fas fa-arrow-left"></i>
           </button>
@@ -127,11 +164,11 @@ const Chat = () => {
           />
           <div className="flex-1">
             <h3 className="font-bold text-lg">{receiver?.username}</h3>
-            <p className="text-sm text-blue-100">{receiver?.email}</p>
+            <p className="text-sm text-slate-200">{receiver?.email}</p>
           </div>
           <button
             onClick={() => navigate(`/profile/${userId}`)}
-            className="text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors"
+            className="text-white hover:bg-slate-800 px-4 py-2 rounded-lg transition-colors"
           >
             <i className="fas fa-user mr-2"></i>
             Xem hồ sơ
@@ -139,7 +176,7 @@ const Chat = () => {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-linear-to-b from-slate-50 to-gray-100">
           {messages.length === 0 ? (
             <div className="text-center text-gray-500 py-20">
               <i className="fas fa-comments fa-3x mb-4 text-gray-300"></i>
@@ -157,9 +194,9 @@ const Chat = () => {
                   }`}
                 >
                   <div
-                    className={`max-w-md px-4 py-2 rounded-lg ${
+                    className={`max-w-md px-4 py-2 rounded-lg shadow-sm ${
                       isSender
-                        ? "bg-blue-600 text-white"
+                        ? "bg-linear-to-r from-slate-600 to-slate-500 text-white"
                         : "bg-white text-gray-800 border border-gray-200"
                     }`}
                   >
@@ -168,31 +205,41 @@ const Chat = () => {
                         {msg.sender.username}
                       </p>
                     )}
-                    <p className="break-words">{msg.message}</p>
+                    <p className="wrap-break-words">{msg.message}</p>
                     {msg.fileUrl && (
                       <div className="mt-2">
                         {msg.fileType?.startsWith("image/") ? (
-                          <img
-                            src={msg.fileUrl}
-                            alt="attachment"
-                            className="max-w-xs rounded-lg"
-                          />
+                          <a href={getFileUrl(msg.fileUrl)} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={getFileUrl(msg.fileUrl)}
+                              alt="attachment"
+                              className="max-w-xs rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                            />
+                          </a>
                         ) : (
                           <a
-                            href={msg.fileUrl}
+                            href={getFileUrl(msg.fileUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-sm underline"
+                            className={`flex items-center gap-3 p-3 rounded-lg ${getFileIcon(msg.fileType, isSender).bg} hover:opacity-80 transition-opacity`}
                           >
-                            <i className="fas fa-file"></i>
-                            Tải file
+                            <i className={`fas ${getFileIcon(msg.fileType, isSender).icon} text-2xl ${getFileIcon(msg.fileType, isSender).color}`}></i>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium truncate ${isSender ? 'text-white' : 'text-gray-800'}`}>
+                                {getFileName(msg.fileUrl)}
+                              </p>
+                              <p className={`text-xs ${isSender ? 'text-slate-200' : 'text-gray-500'}`}>
+                                Nhấn để mở
+                              </p>
+                            </div>
+                            <i className={`fas fa-external-link-alt ${isSender ? 'text-slate-200' : 'text-gray-400'}`}></i>
                           </a>
                         )}
                       </div>
                     )}
                     <p
                       className={`text-xs mt-1 ${
-                        isSender ? "text-blue-100" : "text-gray-400"
+                        isSender ? "text-slate-200" : "text-gray-400"
                       }`}
                     >
                       {formatTime(msg.createdAt)}
@@ -208,18 +255,13 @@ const Chat = () => {
         {/* Input Area */}
         <div className="bg-white border-t border-gray-200 p-4">
           {selectedFile && (
-            <div className="mb-2 flex items-center gap-2 bg-blue-50 p-2 rounded-lg">
-              <i className="fas fa-file text-blue-600"></i>
+            <div className="mb-2 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+              <i className="fas fa-file text-slate-600"></i>
               <span className="text-sm text-gray-700 flex-1">
                 {selectedFile.name}
               </span>
               <button
-                onClick={() => {
-                  setSelectedFile(null);
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                  }
-                }}
+                onClick={clearFileInput}
                 className="text-red-600 hover:text-red-800"
               >
                 <i className="fas fa-times"></i>
@@ -247,12 +289,12 @@ const Chat = () => {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Nhập tin nhắn..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-slate-500"
             />
             <button
               type="submit"
               disabled={sending || (!newMessage.trim() && !selectedFile)}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               {sending ? (
                 <i className="fas fa-spinner fa-spin"></i>

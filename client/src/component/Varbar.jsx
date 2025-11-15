@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
+import api from "../utils/api";
 import "./Navbar.css";
 
 const Navbar = () => {
@@ -9,10 +10,25 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdown, setIsProfileDropdown] = useState(false);
   const [authState, setAuthState] = useState(isAuthenticated);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     setAuthState(isAuthenticated);
+    if (isAuthenticated) {
+      fetchUnreadCount();
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
   }, [isAuthenticated, user]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get("/notifications");
+      setUnreadCount(res.data.unreadCount || 0);
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
 
   if (loading) return null;
 
@@ -65,12 +81,49 @@ const Navbar = () => {
               <Link to="/search-users" className="navbar-links">
                 <i className="fas fa-search"></i> Tìm kiếm
               </Link>
-              <Link to="/chat" className="navbar-links">
+              <Link to="/notifications" className="navbar-links relative">
+                <i className="fas fa-bell"></i> Thông báo
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Link>
+              <Link to="/inbox" className="navbar-links">
                 <i className="fas fa-comment"></i> Tin nhắn
               </Link>
+              <Link to="/quests" className="navbar-links">
+                <i className="fas fa-tasks"></i> Nhiệm vụ
+              </Link>
+              <Link to="/shop" className="navbar-links">
+                <i className="fas fa-store"></i> Cửa hàng
+              </Link>
+              {user?.isVip && user?.vipExpiresAt && (
+                <Link to="/vip" className="navbar-links bg-linear-to-r from-yellow-400 to-yellow-600 text-white hover:from-yellow-500 hover:to-yellow-700 relative">
+                  <i className="fas fa-crown"></i> VIP
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold">
+                    {Math.max(0, Math.ceil((new Date(user.vipExpiresAt) - new Date()) / (1000 * 60 * 60 * 24)))}d
+                  </span>
+                </Link>
+              )}
+              {!(user?.isVip || user?.role === "admin" || user?.role === "manager") && (
+                <Link to="/vip" className="navbar-links bg-linear-to-r from-yellow-400 to-yellow-600 text-white hover:from-yellow-500 hover:to-yellow-700">
+                  <i className="fas fa-crown"></i> VIP
+                </Link>
+              )}
+              {(user?.isVip || user?.role === "admin" || user?.role === "manager") && (
+                <Link to="/theme-settings" className="navbar-links">
+                  <i className="fas fa-palette"></i> Theme
+                </Link>
+              )}
               {user?.role === "admin" && (
                 <Link to="/admin/dashboard" className="navbar-links">
                   <i className="fas fa-tachometer-alt"></i> Dashboard
+                </Link>
+              )}
+              {user?.role === "manager" && (
+                <Link to="/manager/dashboard" className="navbar-links">
+                  <i className="fas fa-user-tie"></i> Dashboard
                 </Link>
               )}
               <Link to={`/profile/${user?._id}`} className="navbar-links">
@@ -128,12 +181,39 @@ const Navbar = () => {
                   <i className="fas fa-search"></i> Tìm kiếm
                 </Link>
                 <Link
-                  to="/chat"
+                  to="/inbox"
                   className="navbar-mobile-link"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <i className="fas fa-comment"></i> Tin nhắn
                 </Link>
+                {user?.isVip && user?.vipExpiresAt && (
+                  <Link
+                    to="/vip"
+                    className="navbar-mobile-link bg-linear-to-r from-yellow-400 to-yellow-600 text-white"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <i className="fas fa-crown"></i> VIP ({Math.max(0, Math.ceil((new Date(user.vipExpiresAt) - new Date()) / (1000 * 60 * 60 * 24)))} ngày)
+                  </Link>
+                )}
+                {!(user?.isVip || user?.role === "admin" || user?.role === "manager") && (
+                  <Link
+                    to="/vip"
+                    className="navbar-mobile-link bg-linear-to-r from-yellow-400 to-yellow-600 text-white"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <i className="fas fa-crown"></i> Nâng cấp VIP
+                  </Link>
+                )}
+                {(user?.isVip || user?.role === "admin" || user?.role === "manager") && (
+                  <Link
+                    to="/theme-settings"
+                    className="navbar-mobile-link"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <i className="fas fa-palette"></i> Cài đặt giao diện
+                  </Link>
+                )}
                 {user?.role === "admin" && (
                   <Link
                     to="/admin/dashboard"
@@ -141,6 +221,15 @@ const Navbar = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <i className="fas fa-tachometer-alt"></i> Dashboard
+                  </Link>
+                )}
+                {user?.role === "manager" && (
+                  <Link
+                    to="/manager/dashboard"
+                    className="navbar-mobile-link"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <i className="fas fa-user-tie"></i> Dashboard
                   </Link>
                 )}
                 <Link

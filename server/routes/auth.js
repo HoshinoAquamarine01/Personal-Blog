@@ -20,6 +20,9 @@ const getTransporter = async () => {
           user: config.emailUser,
           pass: config.emailPassword,
         },
+        tls: {
+          rejectUnauthorized: false
+        }
       });
     }
   } catch (err) {
@@ -33,6 +36,9 @@ const getTransporter = async () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
+    tls: {
+      rejectUnauthorized: false
+    }
   });
 };
 
@@ -164,11 +170,7 @@ router.post("/forgot-password", async (req, res) => {
       return res.status(404).json({ message: "Email not found" });
     }
 
-    // Check if user is banned
-    if (user.isBanned) {
-      console.warn("🚫 Banned user tried password reset:", email);
-      return res.status(403).json({ message: "Your account has been banned" });
-    }
+
 
     // Generate 6-digit code
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
