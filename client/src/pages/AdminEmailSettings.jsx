@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/Authcontext";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
-import "../style/Adminlogin.css";
 
 const AdminEmailSettings = () => {
   const { user, isAdmin } = useAuth();
@@ -63,62 +62,47 @@ const AdminEmailSettings = () => {
   };
 
   return (
-    <div className="admin-login-page">
-      <div className="login-container">
-        <div className="login-box">
-          <div className="login-header">
-            <i className="fas fa-envelope"></i>
-            <h1>Email Settings</h1>
-            <p>Configure email for password reset</p>
+    <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4 animate-fadeIn">
+      <div className="w-full max-w-md">
+        <div className="card shadow-2xl animate-slideInScale">
+          {/* Header */}
+          <div className="text-center mb-8 pb-6 border-b border-gray-200">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-full mb-4">
+              <i className="fas fa-envelope text-white text-2xl"></i>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              Email Settings
+            </h1>
+            <p className="text-gray-600">Configure email for password reset</p>
           </div>
 
+          {/* Messages */}
           {success && (
-            <div
-              style={{
-                background: "#efe",
-                color: "#0a0",
-                padding: "1rem",
-                borderRadius: "8px",
-                marginBottom: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
-            >
+            <div className="alert alert-success mb-4 animate-slideUp">
               <i className="fas fa-check-circle"></i>
               <span>{success}</span>
             </div>
           )}
 
           {error && (
-            <div
-              style={{
-                background: "#fee",
-                color: "#c00",
-                padding: "1rem",
-                borderRadius: "8px",
-                marginBottom: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
-            >
+            <div className="alert alert-error mb-4 animate-slideUp">
               <i className="fas fa-exclamation-circle"></i>
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="login-form">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5 mb-6">
             <div className="form-group">
-              <label>
-                <i className="fas fa-server"></i>
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-server text-primary mr-2"></i>
                 Email Service
               </label>
               <select
                 name="emailService"
                 value={formData.emailService}
                 onChange={handleChange}
-                className="form-control"
+                className="filter-select"
               >
                 <option value="gmail">Gmail</option>
                 <option value="outlook">Outlook</option>
@@ -127,8 +111,8 @@ const AdminEmailSettings = () => {
             </div>
 
             <div className="form-group">
-              <label>
-                <i className="fas fa-envelope"></i>
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-envelope text-primary mr-2"></i>
                 Email Address
               </label>
               <input
@@ -144,11 +128,11 @@ const AdminEmailSettings = () => {
             </div>
 
             <div className="form-group">
-              <label>
-                <i className="fas fa-key"></i>
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-key text-primary mr-2"></i>
                 App Password
               </label>
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   name="emailPassword"
@@ -162,55 +146,41 @@ const AdminEmailSettings = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: "absolute",
-                    right: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    border: "none",
-                    background: "none",
-                    color: "#667eea",
-                    cursor: "pointer",
-                  }}
+                  className="absolute right-4 top-4 text-primary hover:opacity-80"
                 >
                   <i
                     className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}
                   ></i>
                 </button>
               </div>
-              <p
-                style={{
-                  fontSize: "0.85rem",
-                  color: "#666",
-                  marginTop: "0.5rem",
-                }}
-              >
+              <p className="text-xs text-gray-500 mt-2">
                 Get App Password:{" "}
                 <a
                   href="https://myaccount.google.com/apppasswords"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: "#667eea" }}
+                  className="text-primary hover:opacity-80"
                 >
                   myaccount.google.com/apppasswords
                 </a>
               </p>
             </div>
 
-            <button type="submit" className="btn-login" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary w-full"
+              disabled={loading}
+            >
               <i className="fas fa-save"></i>
               {loading ? "Saving..." : "Save Email Settings"}
             </button>
           </form>
 
-          <div className="login-footer">
+          {/* Footer */}
+          <div className="text-center pt-6 border-t border-gray-200">
             <a
               href="/"
-              style={{
-                color: "#667eea",
-                textDecoration: "none",
-                fontWeight: "600",
-              }}
+              className="text-primary hover:opacity-80 font-semibold transition-opacity"
             >
               ← Back to Home
             </a>

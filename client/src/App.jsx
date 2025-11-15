@@ -11,17 +11,18 @@ import Footer from "./component/Footer";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminEmailSettings from "./pages/AdminEmailSettings";
-import "./style/App.css";
 import CreatePost from "./pages/CreatePost";
 import EditPost from "./pages/EditPost";
 import PostDetail from "./pages/PostDetail";
 import UserProfile from "./pages/UserProfile";
 import ChangePassword from "./pages/ChangePassword";
+import EditProfile from "./pages/EditProfile";
+import SearchUsers from "./pages/SearchUsers";
+import Chat from "./pages/Chat";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -80,6 +81,23 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <AdminEmailSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/profile/:userId/edit" element={<EditProfile />} />
+          <Route
+            path="/search-users"
+            element={
+              <ProtectedRoute>
+                <SearchUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat/:userId"
+            element={
+              <ProtectedRoute>
+                <Chat />
               </ProtectedRoute>
             }
           />

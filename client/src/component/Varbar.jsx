@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/Authcontext";
-import "../style/Navbar.css";
+import "./Navbar.css";
 
 const Navbar = () => {
   const { user, logout, isAuthenticated, loading } = useAuth();
@@ -40,165 +40,143 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
-      <div className="navbar-content">
-        {/* Logo - Bên trái */}
-        <Link to="/" className="navbar-brand" onClick={closeMenu}>
-          <i className="fas fa-blog"></i> My Blog
+    <nav className="navbar shadow-lg sticky top-0 z-50">
+      <div className="container flex items-center justify-between h-16">
+        {/* Logo */}
+        <Link
+          to="/"
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
+          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+            <i className="fas fa-blog text-blue-600 text-xl"></i>
+          </div>
+          <span className="text-white font-bold text-xl hidden sm:inline">
+            MyBlog
+          </span>
         </Link>
 
-        <button
-          className={`navbar-toggle ${isMenuOpen ? "active" : ""}`}
-          onClick={toggleMenu}
-          aria-label="Toggle menu"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center gap-1">
+          <Link to="/" className="navbar-links">
+            <i className="fas fa-home"></i> Home
+          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/search-users" className="navbar-links">
+                <i className="fas fa-search"></i> Tìm kiếm
+              </Link>
+              <Link to="/chat" className="navbar-links">
+                <i className="fas fa-comment"></i> Tin nhắn
+              </Link>
+              {user?.role === "admin" && (
+                <Link to="/admin/dashboard" className="navbar-links">
+                  <i className="fas fa-tachometer-alt"></i> Dashboard
+                </Link>
+              )}
+              <Link to={`/profile/${user?._id}`} className="navbar-links">
+                <i className="fas fa-user-circle"></i> Profile
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="navbar-links hover:bg-red-500"
+              >
+                <i className="fas fa-sign-out-alt"></i> Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="navbar-links">
+                <i className="fas fa-sign-in-alt"></i> Login
+              </Link>
+              <Link
+                to="/register"
+                className="navbar-links bg-white text-blue-600 hover:bg-gray-100"
+              >
+                <i className="fas fa-user-plus"></i> Register
+              </Link>
+            </>
+          )}
+        </div>
 
-        {/* Navbar Links - Bên phải */}
-        <div className={`navbar-links ${isMenuOpen ? "active" : ""}`}>
-          {/* Section 1: Home, Register, Login - cùng một section */}
-          <div className="navbar-section home-section">
-            <Link to="/" onClick={closeMenu}>
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="md:hidden text-white text-2xl hover:opacity-80 transition-opacity"
+        >
+          <i className={`fas fa-${isMenuOpen ? "times" : "bars"}`}></i>
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-blue-700 border-t-2 border-blue-800 animate-slideDown">
+          <div className="container py-4 space-y-2">
+            <Link
+              to="/"
+              className="navbar-mobile-link"
+              onClick={() => setIsMenuOpen(false)}
+            >
               <i className="fas fa-home"></i> Home
             </Link>
-            {!authState && (
+            {isAuthenticated ? (
               <>
-                <Link to="/register" onClick={closeMenu}>
-                  <i className="fas fa-user-plus"></i> Register
+                <Link
+                  to="/search-users"
+                  className="navbar-mobile-link"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <i className="fas fa-search"></i> Tìm kiếm
                 </Link>
-                <Link to="/login" onClick={closeMenu}>
-                  <i className="fas fa-sign-in-alt"></i> Login
+                <Link
+                  to="/chat"
+                  className="navbar-mobile-link"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <i className="fas fa-comment"></i> Tin nhắn
                 </Link>
-              </>
-            )}
-          </div>
-
-          {/* Section 2: Dashboard & Profile - chỉ khi đã login */}
-          <div className="navbar-section auth-section">
-            {authState && (
-              <>
                 {user?.role === "admin" && (
                   <Link
                     to="/admin/dashboard"
-                    onClick={closeMenu}
-                    className="btn-dashboard"
+                    className="navbar-mobile-link"
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     <i className="fas fa-tachometer-alt"></i> Dashboard
                   </Link>
                 )}
-
-                {/* Profile Dropdown */}
-                {user?._id && (
-                  <div className="profile-dropdown-container">
-                    <button
-                      className="profile-avatar-btn"
-                      onClick={toggleProfileDropdown}
-                      title={user?.username || user?.email}
-                    >
-                      <img
-                        src={
-                          user?.avatar ||
-                          "https://via.placeholder.com/40?text=Avatar"
-                        }
-                        alt="Avatar"
-                        className="avatar-small"
-                        onError={(e) =>
-                          (e.target.src =
-                            "https://via.placeholder.com/40?text=Avatar")
-                        }
-                      />
-                      <span className="username-text">
-                        {user?.username || user?.email?.split("@")[0]}
-                      </span>
-                      <i className="fas fa-chevron-down"></i>
-                    </button>
-
-                    {/* Dropdown Menu */}
-                    {isProfileDropdown && (
-                      <div className="profile-dropdown-menu">
-                        {/* User Info Header */}
-                        <div className="profile-header">
-                          <img
-                            src={
-                              user?.avatar ||
-                              "https://via.placeholder.com/60?text=Avatar"
-                            }
-                            alt="Avatar"
-                            className="avatar-large"
-                          />
-                          <div className="user-info">
-                            <h4>{user?.username || user?.email}</h4>
-                            <p className="email">{user?.email}</p>
-                            <span className={`role-badge role-${user?.role}`}>
-                              {user?.role === "admin" ? "👑 Admin" : "👤 User"}
-                            </span>
-                          </div>
-                        </div>
-
-                        <hr className="dropdown-divider" />
-
-                        {/* Menu Items */}
-                        <div className="dropdown-items">
-                  
-                          <Link
-                            to={`/profile/${user?._id}`}
-                            className="dropdown-item"
-                            onClick={closeProfileDropdown}
-                          >
-                            <i className="fas fa-user-circle"></i>
-                            <span> View your profile </span>
-                          </Link>
-
-                          <Link
-                            to={`/profile/${user?._id}`}
-                            className="dropdown-item"
-                            onClick={closeProfileDropdown}
-                          >
-                            <i className="fas fa-edit"></i>
-                            <span>Edit Profile</span>
-                          </Link>
-
-                          {user?.role === "admin" && (
-                            <Link
-                              to="/admin/dashboard"
-                              className="dropdown-item"
-                              onClick={closeProfileDropdown}
-                            >
-                              <i className="fas fa-tachometer-alt"></i>
-                              <span>Dashboard</span>
-                            </Link>
-                          )}
-
-                          <button
-                            className="dropdown-item logout-item"
-                            onClick={() => {
-                              handleLogout();
-                              closeProfileDropdown();
-                            }}
-                          >
-                            <i className="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <Link
+                  to={`/profile/${user?._id}`}
+                  className="navbar-mobile-link"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <i className="fas fa-user-circle"></i> Profile
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="navbar-mobile-link w-full text-left hover:bg-red-600"
+                >
+                  <i className="fas fa-sign-out-alt"></i> Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="navbar-mobile-link"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <i className="fas fa-sign-in-alt"></i> Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="navbar-mobile-link bg-white text-blue-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <i className="fas fa-user-plus"></i> Register
+                </Link>
               </>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Click outside để close dropdown */}
-      {isProfileDropdown && (
-        <div
-          className="overlay"
-          onClick={() => setIsProfileDropdown(false)}
-        ></div>
       )}
     </nav>
   );

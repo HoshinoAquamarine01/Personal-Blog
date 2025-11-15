@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../utils/api";
-import "../style/Adminlogin.css";
 
 const ResetPassword = () => {
   const [code, setCode] = useState("");
@@ -19,33 +18,20 @@ const ResetPassword = () => {
 
   if (!email) {
     return (
-      <div className="admin-login-page">
-        <div className="login-container">
-          <div className="login-box">
-            <div
-              style={{
-                background: "#fee",
-                color: "#c00",
-                padding: "2rem",
-                borderRadius: "8px",
-                textAlign: "center",
-              }}
-            >
-              <i
-                className="fas fa-times-circle"
-                style={{
-                  fontSize: "2rem",
-                  marginBottom: "1rem",
-                  display: "block",
-                }}
-              ></i>
-              <h2 style={{ margin: "0.5rem 0" }}>Invalid Access</h2>
-              <p style={{ margin: "0.5rem 0", marginBottom: "1.5rem" }}>
+      <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4 animate-fadeIn">
+        <div className="w-full max-w-md">
+          <div className="card shadow-2xl text-center animate-slideInScale">
+            <div className="mb-4">
+              <i className="fas fa-times-circle text-5xl text-danger mb-4 block"></i>
+              <h2 className="text-2xl font-bold text-danger mb-2">
+                Invalid Access
+              </h2>
+              <p className="text-gray-600 mb-6">
                 Please request a new reset code.
               </p>
               <button
                 onClick={() => navigate("/forgot-password")}
-                className="btn-login"
+                className="btn btn-primary w-full"
               >
                 <i className="fas fa-redo"></i>
                 Request New Code
@@ -102,38 +88,17 @@ const ResetPassword = () => {
 
   if (success) {
     return (
-      <div className="admin-login-page">
-        <div className="login-container">
-          <div className="login-box">
-            <div
-              style={{
-                background: "#efe",
-                color: "#0a0",
-                padding: "2rem",
-                borderRadius: "8px",
-                textAlign: "center",
-              }}
-            >
-              <i
-                className="fas fa-check-circle"
-                style={{
-                  fontSize: "3rem",
-                  marginBottom: "1rem",
-                  display: "block",
-                }}
-              ></i>
-              <h2 style={{ margin: "0.5rem 0", color: "#0a0" }}>
-                ✅ Password Reset!
-              </h2>
-              <p style={{ margin: "0.5rem 0", marginBottom: "1rem" }}>
-                Your password has been reset successfully.
-              </p>
-              <p
-                style={{ margin: "0.5rem 0", fontSize: "0.9rem", opacity: 0.8 }}
-              >
-                Redirecting to home...
-              </p>
-            </div>
+      <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4 animate-fadeIn">
+        <div className="w-full max-w-md">
+          <div className="card shadow-2xl text-center animate-slideInScale">
+            <i className="fas fa-check-circle text-6xl text-green-500 mb-4 block"></i>
+            <h2 className="text-3xl font-bold text-green-600 mb-2">
+              Password Reset!
+            </h2>
+            <p className="text-gray-600 mb-2">
+              Your password has been reset successfully.
+            </p>
+            <p className="text-sm text-gray-500">Redirecting to home...</p>
           </div>
         </div>
       </div>
@@ -141,43 +106,38 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="admin-login-page">
-      <div className="login-container">
-        <div className="login-box">
-          <div className="login-header">
-            <i className="fas fa-lock"></i>
-            <h1>Reset Password</h1>
-            <p>Enter code and new password</p>
+    <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4 animate-fadeIn">
+      <div className="w-full max-w-md">
+        <div className="card shadow-2xl animate-slideInScale">
+          {/* Header */}
+          <div className="text-center mb-8 pb-6 border-b border-gray-200">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-full mb-4">
+              <i className="fas fa-lock text-white text-2xl"></i>
+            </div>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              Reset Password
+            </h1>
+            <p className="text-gray-600">Enter code and new password</p>
           </div>
 
+          {/* Error Message */}
           {error && (
-            <div
-              style={{
-                background: "#fee",
-                color: "#c00",
-                padding: "1rem",
-                borderRadius: "8px",
-                marginBottom: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                fontSize: "0.95rem",
-              }}
-            >
+            <div className="alert alert-error mb-4 animate-slideUp">
               <i className="fas fa-exclamation-circle"></i>
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="login-form">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5 mb-6">
             <div className="form-group">
-              <label>
-                <i className="fas fa-hashtag"></i>
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-hashtag text-primary mr-2"></i>
                 Reset Code
               </label>
               <input
                 type="text"
-                className="form-control"
+                className="form-control text-center text-2xl font-bold letter-spacing tracking-widest"
                 placeholder="000000"
                 value={code}
                 onChange={(e) =>
@@ -186,21 +146,15 @@ const ResetPassword = () => {
                 maxLength="6"
                 required
                 disabled={loading}
-                style={{
-                  fontSize: "2rem",
-                  letterSpacing: "0.5rem",
-                  textAlign: "center",
-                  fontWeight: "bold",
-                }}
               />
             </div>
 
             <div className="form-group">
-              <label>
-                <i className="fas fa-lock"></i>
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-lock text-primary mr-2"></i>
                 New Password
               </label>
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   className="form-control"
@@ -213,16 +167,7 @@ const ResetPassword = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: "absolute",
-                    right: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    border: "none",
-                    background: "none",
-                    color: "#667eea",
-                    cursor: "pointer",
-                  }}
+                  className="absolute right-4 top-4 text-primary hover:opacity-80"
                 >
                   <i
                     className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}
@@ -232,11 +177,11 @@ const ResetPassword = () => {
             </div>
 
             <div className="form-group">
-              <label>
-                <i className="fas fa-lock"></i>
+              <label className="flex items-center font-semibold text-gray-700 mb-2">
+                <i className="fas fa-lock text-primary mr-2"></i>
                 Confirm Password
               </label>
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   className="form-control"
@@ -249,16 +194,7 @@ const ResetPassword = () => {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{
-                    position: "absolute",
-                    right: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    border: "none",
-                    background: "none",
-                    color: "#667eea",
-                    cursor: "pointer",
-                  }}
+                  className="absolute right-4 top-4 text-primary hover:opacity-80"
                 >
                   <i
                     className={
@@ -269,20 +205,21 @@ const ResetPassword = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn-login" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary w-full"
+              disabled={loading}
+            >
               <i className="fas fa-check"></i>
               {loading ? "Resetting..." : "Reset Password"}
             </button>
           </form>
 
-          <div className="login-footer">
+          {/* Footer */}
+          <div className="text-center pt-6 border-t border-gray-200">
             <a
               href="/login"
-              style={{
-                color: "#667eea",
-                textDecoration: "none",
-                fontWeight: "600",
-              }}
+              className="text-primary hover:opacity-80 font-semibold transition-opacity"
             >
               ← Back to Login
             </a>
