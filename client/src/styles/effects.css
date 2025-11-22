@@ -1,0 +1,92 @@
+/* Rainbow Effect */
+.effect-rainbow {
+  background: linear-gradient(
+    45deg,
+    #ff0000,
+    #ff7f00,
+    #ffff00,
+    #00ff00,
+    #0000ff,
+    #4b0082,
+    #9400d3
+  );
+  background-size: 400% 400%;
+  animation: rainbow 2s ease infinite;
+}
+
+@keyframes rainbow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Glow Effect */
+.effect-glow {
+  box-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 60px #00ffff;
+  animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 60px #00ffff;
+  }
+  to {
+    box-shadow: 0 0 30px #00ffff, 0 0 60px #00ffff, 0 0 90px #00ffff;
+  }
+}
+
+/* Sparkle Effect */
+.effect-sparkle {
+  position: relative;
+  overflow: hidden;
+}
+
+.effect-sparkle::before {
+  content: "✨";
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  font-size: 2rem;
+  animation: sparkle 1s infinite;
+}
+
+.effect-sparkle::after {
+  content: "⭐";
+  position: absolute;
+  top: 70%;
+  right: 20%;
+  font-size: 1.5rem;
+  animation: sparkle 1.2s infinite reverse;
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Fire Effect */
+.effect-fire {
+  background: linear-gradient(0deg, #ff4500, #ff6347, #ffa500, #ffff00);
+  background-size: 100% 200%;
+  animation: fire 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes fire {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 0% 100%;
+  }
+}

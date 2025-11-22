@@ -4,31 +4,40 @@ import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Get user notifications
+// Get all notifications
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const notifications = await Notification.find({ recipient: req.userId })
-      .populate("sender", "username avatar")
+    const notifications = await Notification.find({ userId: req.userId })
       .sort({ createdAt: -1 })
-      .limit(50);
+      .limit(50)
+      .populate("fromUser", "username avatar");
 
-    const unreadCount = await Notification.countDocuments({
-      recipient: req.userId,
-      read: false,
+    res.json({ notifications });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get unread count
+router.get("/unread-count", verifyToken, async (req, res) => {
+  try {
+    const count = await Notification.countDocuments({
+      userId: req.userId,
+      isRead: false,
     });
 
-    res.json({ notifications, unreadCount });
+    res.json({ count });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // Mark as read
-router.patch("/:id/read", verifyToken, async (req, res) => {
+router.put("/:id/read", verifyToken, async (req, res) => {
   try {
     const notification = await Notification.findOneAndUpdate(
-      { _id: req.params.id, recipient: req.userId },
-      { read: true },
+      { _id: req.params.id, userId: req.userId },
+      { isRead: true },
       { new: true }
     );
 
@@ -36,28 +45,21 @@ router.patch("/:id/read", verifyToken, async (req, res) => {
       return res.status(404).json({ error: "Notification not found" });
     }
 
-    res.json({ notification });
+    res.json({ success: true, notification });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Toggle save
-router.patch("/:id/save", verifyToken, async (req, res) => {
+// Mark all as read
+router.put("/mark-all-read", verifyToken, async (req, res) => {
   try {
-    const notification = await Notification.findOne({
-      _id: req.params.id,
-      recipient: req.userId,
-    });
+    await Notification.updateMany(
+      { userId: req.userId, isRead: false },
+      { isRead: true }
+    );
 
-    if (!notification) {
-      return res.status(404).json({ error: "Notification not found" });
-    }
-
-    notification.saved = !notification.saved;
-    await notification.save();
-
-    res.json({ notification });
+    res.json({ success: true, message: "All notifications marked as read" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -66,30 +68,12 @@ router.patch("/:id/save", verifyToken, async (req, res) => {
 // Delete notification
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
-    const notification = await Notification.findOneAndDelete({
+    await Notification.findOneAndDelete({
       _id: req.params.id,
-      recipient: req.userId,
+      userId: req.userId,
     });
 
-    if (!notification) {
-      return res.status(404).json({ error: "Notification not found" });
-    }
-
-    res.json({ message: "Notification deleted" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Mark all as read
-router.patch("/read-all", verifyToken, async (req, res) => {
-  try {
-    await Notification.updateMany(
-      { recipient: req.userId, read: false },
-      { read: true }
-    );
-
-    res.json({ message: "All notifications marked as read" });
+    res.json({ success: true, message: "Notification deleted" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

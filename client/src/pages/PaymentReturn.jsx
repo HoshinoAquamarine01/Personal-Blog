@@ -27,7 +27,7 @@ const PaymentReturn = () => {
   }, [paymentId, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center py-12">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-purple-50 flex items-center justify-center py-12">
       <div className="card max-w-md w-full text-center">
         {status === "processing" && (
           <>

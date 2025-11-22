@@ -16,6 +16,8 @@ const Profile = () => {
   const [userPosts, setUserPosts] = useState([]);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showCoverModal, setShowCoverModal] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   const profileId = urlUserId;
 
@@ -44,6 +46,21 @@ const Profile = () => {
     fetchProfile();
   }, [profileId]);
 
+  useEffect(() => {
+    const checkFollowingStatus = async () => {
+      if (!currentUser || !profileId) return;
+
+      try {
+        const followRes = await api.get(`/users/${profileId}/is-following`);
+        setIsFollowing(followRes.data.isFollowing);
+      } catch (err) {
+        console.error("Error checking follow status:", err);
+      }
+    };
+
+    checkFollowingStatus();
+  }, [currentUser, profileId]);
+
   const handleAvatarChange = (newAvatarUrl) => {
     setUserProfile({ ...userProfile, avatar: newAvatarUrl });
     if (currentUser?._id === userProfile._id) {
@@ -55,6 +72,35 @@ const Profile = () => {
     setUserProfile({ ...userProfile, coverImage: newCoverUrl });
     if (currentUser?._id === userProfile._id) {
       window.location.reload();
+    }
+  };
+
+  const handleFollowToggle = async () => {
+    try {
+      setFollowLoading(true);
+
+      if (isFollowing) {
+        await api.delete(`/users/${userProfile._id}/follow`);
+        setIsFollowing(false);
+        setUserProfile({
+          ...userProfile,
+          followers: (userProfile.followers || []).filter(
+            (id) => id !== currentUser._id
+          ),
+        });
+      } else {
+        await api.post(`/users/${userProfile._id}/follow`);
+        setIsFollowing(true);
+        setUserProfile({
+          ...userProfile,
+          followers: [...(userProfile.followers || []), currentUser._id],
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+      alert(error.response?.data?.error || "Không thể thực hiện");
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -94,7 +140,8 @@ const Profile = () => {
         <div className="profile-cover" style={{ position: "relative" }}>
           <img
             src={
-              getImageUrl(userProfile.coverImage) || "https://via.placeholder.com/1200x300"
+              getImageUrl(userProfile.coverImage) ||
+              "https://via.placeholder.com/1200x300"
             }
             alt="Cover"
             className="cover-image"
@@ -201,12 +248,24 @@ const Profile = () => {
                 {userPosts.length} bài viết
               </span>
               <span className={`role-badge role-${userProfile.role}`}>
-                {userProfile.role === "admin" ? "👑 Admin" : userProfile.role === "manager" ? "👔 Manager" : "👤 User"}
+                {userProfile.role === "admin"
+                  ? "👑 Admin"
+                  : userProfile.role === "manager"
+                  ? "👔 Manager"
+                  : "👤 User"}
               </span>
               {userProfile.isVip && userProfile.vipExpiresAt && (
                 <span className="px-3 py-1 rounded-full text-sm font-bold bg-linear-to-r from-yellow-400 to-orange-500 text-white">
                   <i className="fas fa-crown mr-1"></i>
-                  VIP ({Math.max(0, Math.ceil((new Date(userProfile.vipExpiresAt) - new Date()) / (1000 * 60 * 60 * 24)))} ngày)
+                  VIP (
+                  {Math.max(
+                    0,
+                    Math.ceil(
+                      (new Date(userProfile.vipExpiresAt) - new Date()) /
+                        (1000 * 60 * 60 * 24)
+                    )
+                  )}
+                  ngày)
                 </span>
               )}
             </div>
@@ -246,10 +305,23 @@ const Profile = () => {
                   <i className="fas fa-comment"></i> Nhắn tin
                 </button>
                 <button
-                  onClick={() => navigate(`/profile/${userProfile._id}`)}
-                  className="btn btn-secondary"
+                  onClick={handleFollowToggle}
+                  disabled={followLoading}
+                  className={`btn ${
+                    isFollowing ? "btn-secondary" : "btn-primary"
+                  }`}
                 >
-                  <i className="fas fa-user-plus"></i> Theo dõi
+                  {followLoading ? (
+                    <i className="fas fa-spinner fa-spin"></i>
+                  ) : isFollowing ? (
+                    <>
+                      <i className="fas fa-user-check"></i> Đang theo dõi
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-user-plus"></i> Theo dõi
+                    </>
+                  )}
                 </button>
               </div>
             )}

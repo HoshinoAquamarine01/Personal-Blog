@@ -27,13 +27,14 @@ import SearchUsers from "./pages/SearchUsers";
 import Chat from "./pages/Chat";
 import Inbox from "./pages/Inbox";
 import Notifications from "./pages/Notifications";
+import Shop from "./pages/Shop";
 import VipPurchase from "./pages/VipPurchase";
 import PaymentConfirm from "./pages/PaymentConfirm";
 import PaymentReturn from "./pages/PaymentReturn";
 import PaymentBank from "./pages/PaymentBank";
 import ThemeSettings from "./pages/ThemeSettings";
 import Quests from "./pages/Quests";
-import Shop from "./pages/Shop";
+import Chatbot from "./component/Chatbot";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -184,18 +185,12 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/shop"
-            element={
-              <ProtectedRoute>
-                <Shop />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/shop" element={<Shop />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
       <Footer />
+      <Chatbot />
     </Router>
   );
 }

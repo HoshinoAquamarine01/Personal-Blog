@@ -23,10 +23,11 @@ const Navbar = () => {
 
   const fetchUnreadCount = async () => {
     try {
-      const res = await api.get("/notifications");
-      setUnreadCount(res.data.unreadCount || 0);
+      const res = await api.get("/notifications/unread-count");
+      setUnreadCount(res.data.count || 0);
     } catch (error) {
       console.error("Error fetching unread count:", error);
+      setUnreadCount(0);
     }
   };
 
@@ -99,19 +100,38 @@ const Navbar = () => {
                 <i className="fas fa-store"></i> Cửa hàng
               </Link>
               {user?.isVip && user?.vipExpiresAt && (
-                <Link to="/vip" className="navbar-links bg-linear-to-r from-yellow-400 to-yellow-600 text-white hover:from-yellow-500 hover:to-yellow-700 relative">
+                <Link
+                  to="/vip"
+                  className="navbar-links bg-linear-to-r from-yellow-400 to-yellow-600 text-white hover:from-yellow-500 hover:to-yellow-700 relative"
+                >
                   <i className="fas fa-crown"></i> VIP
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold">
-                    {Math.max(0, Math.ceil((new Date(user.vipExpiresAt) - new Date()) / (1000 * 60 * 60 * 24)))}d
+                    {Math.max(
+                      0,
+                      Math.ceil(
+                        (new Date(user.vipExpiresAt) - new Date()) /
+                          (1000 * 60 * 60 * 24)
+                      )
+                    )}
+                    d
                   </span>
                 </Link>
               )}
-              {!(user?.isVip || user?.role === "admin" || user?.role === "manager") && (
-                <Link to="/vip" className="navbar-links bg-linear-to-r from-yellow-400 to-yellow-600 text-white hover:from-yellow-500 hover:to-yellow-700">
+              {!(
+                user?.isVip ||
+                user?.role === "admin" ||
+                user?.role === "manager"
+              ) && (
+                <Link
+                  to="/vip"
+                  className="navbar-links bg-linear-to-r from-yellow-400 to-yellow-600 text-white hover:from-yellow-500 hover:to-yellow-700"
+                >
                   <i className="fas fa-crown"></i> VIP
                 </Link>
               )}
-              {(user?.isVip || user?.role === "admin" || user?.role === "manager") && (
+              {(user?.isVip ||
+                user?.role === "admin" ||
+                user?.role === "manager") && (
                 <Link to="/theme-settings" className="navbar-links">
                   <i className="fas fa-palette"></i> Theme
                 </Link>
@@ -187,16 +207,35 @@ const Navbar = () => {
                 >
                   <i className="fas fa-comment"></i> Tin nhắn
                 </Link>
+                <Link
+                  to="/quests"
+                  className="navbar-mobile-link"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <i className="fas fa-tasks"></i> Nhiệm vụ
+                </Link>
                 {user?.isVip && user?.vipExpiresAt && (
                   <Link
                     to="/vip"
                     className="navbar-mobile-link bg-linear-to-r from-yellow-400 to-yellow-600 text-white"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <i className="fas fa-crown"></i> VIP ({Math.max(0, Math.ceil((new Date(user.vipExpiresAt) - new Date()) / (1000 * 60 * 60 * 24)))} ngày)
+                    <i className="fas fa-crown"></i> VIP (
+                    {Math.max(
+                      0,
+                      Math.ceil(
+                        (new Date(user.vipExpiresAt) - new Date()) /
+                          (1000 * 60 * 60 * 24)
+                      )
+                    )}{" "}
+                    ngày)
                   </Link>
                 )}
-                {!(user?.isVip || user?.role === "admin" || user?.role === "manager") && (
+                {!(
+                  user?.isVip ||
+                  user?.role === "admin" ||
+                  user?.role === "manager"
+                ) && (
                   <Link
                     to="/vip"
                     className="navbar-mobile-link bg-linear-to-r from-yellow-400 to-yellow-600 text-white"
@@ -205,7 +244,9 @@ const Navbar = () => {
                     <i className="fas fa-crown"></i> Nâng cấp VIP
                   </Link>
                 )}
-                {(user?.isVip || user?.role === "admin" || user?.role === "manager") && (
+                {(user?.isVip ||
+                  user?.role === "admin" ||
+                  user?.role === "manager") && (
                   <Link
                     to="/theme-settings"
                     className="navbar-mobile-link"

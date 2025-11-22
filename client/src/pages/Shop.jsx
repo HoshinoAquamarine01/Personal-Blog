@@ -1,128 +1,129 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAuth } from "../context/Authcontext";
-import api from "../utils/api";
 
 const Shop = () => {
-  const { user, updateUser } = useAuth();
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user, updateProfile } = useAuth();
+  const [userCoins, setUserCoins] = useState(user?.coins || 100);
+  const [purchasedEffects, setPurchasedEffects] = useState(user?.ownedEffects || []);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchItems();
-  }, []);
+  const api = import('../utils/api').then(module => module.default);
 
-  const fetchItems = async () => {
+  const effects = [
+    {
+      id: "rainbow",
+      name: "Rainbow Border",
+      price: 50,
+      description: "Colorful rainbow border around profile",
+      preview: "border-4 border-gradient-to-r from-red-500 via-yellow-500 to-blue-500"
+    },
+    {
+      id: "glow",
+      name: "Neon Glow",
+      price: 30,
+      description: "Glowing neon effect",
+      preview: "shadow-lg shadow-blue-500/50 border-2 border-blue-400"
+    },
+    {
+      id: "sparkle",
+      name: "Sparkle Animation",
+      price: 75,
+      description: "Sparkling stars animation",
+      preview: "animate-pulse bg-gradient-to-r from-purple-400 to-pink-400"
+    },
+    {
+      id: "fire",
+      name: "Fire Effect",
+      price: 60,
+      description: "Burning fire animation",
+      preview: "bg-gradient-to-t from-red-600 via-orange-500 to-yellow-400 animate-bounce"
+    }
+  ];
+
+  const buyEffect = async (effect) => {
+    if (loading || userCoins < effect.price || purchasedEffects.includes(effect.id)) return;
+    
+    setLoading(true);
     try {
-      const res = await api.get("/shop");
-      setItems(res.data);
-    } catch (err) {
-      console.error(err);
+      const apiModule = await api;
+      const response = await apiModule.post('/shop/buy-effect', {
+        effectId: effect.id,
+        price: effect.price
+      });
+      
+      setUserCoins(response.data.coins);
+      setPurchasedEffects(response.data.ownedEffects);
+    } catch (error) {
+      console.error('Purchase failed:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePurchase = async (itemId) => {
-    try {
-      const res = await api.post(`/shop/purchase/${itemId}`);
-      alert("✅ Mua thành công!");
-      updateUser({ ...user, coins: res.data.coins, ownedEffects: res.data.ownedEffects });
-      fetchItems();
-    } catch (err) {
-      alert(err.response?.data?.message || "Lỗi mua vật phẩm");
-    }
+  const activateEffect = (effectId) => {
+    document.body.className = `effect-${effectId}`;
+    setTimeout(() => {
+      document.body.className = "";
+    }, 5000);
   };
-
-  const handleEquip = async (effectId) => {
-    try {
-      await api.post(`/shop/equip/${effectId}`);
-      alert("✅ Đã trang bị!");
-      updateUser({ ...user, activeEffect: effectId });
-    } catch (err) {
-      alert(err.response?.data?.message || "Lỗi trang bị");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container max-w-6xl mx-auto px-4">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">
-              <i className="fas fa-store text-primary mr-3"></i>
-              Cửa hàng
-            </h1>
-            <p className="text-gray-600">Mua hiệu ứng và trang trí</p>
-          </div>
-          <div className="card px-6 py-3">
-            <div className="flex items-center gap-3">
-              <i className="fas fa-coins text-yellow-500 text-2xl"></i>
-              <div>
-                <p className="text-sm text-gray-600">Xu của bạn</p>
-                <p className="text-2xl font-bold text-slate-800">{user?.coins || 0}</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-4 animate-pulse">
+            ✨ Magic Shop ✨
+          </h1>
+          <div className="bg-yellow-500 text-black px-6 py-2 rounded-full inline-block font-bold">
+            💰 {userCoins} Coins
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {items.map((item) => {
-            const owned = user?.ownedEffects?.includes(item.effectId);
-            const equipped = user?.activeEffect === item.effectId;
+        {/* Effects Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {effects.map((effect) => {
+            const owned = purchasedEffects.includes(effect.id);
+            const canBuy = userCoins >= effect.price;
 
             return (
-              <div key={item._id} className="card hover:shadow-xl transition-shadow">
-                <div className="text-center mb-4">
-                  <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 ${
-                    equipped ? 'bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse' : 'bg-blue-100'
-                  }`}>
-                    <i className={`fas ${item.icon} text-3xl ${equipped ? 'text-white' : 'text-blue-600'}`}></i>
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-2">{item.name}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{item.description}</p>
+              <div
+                key={effect.id}
+                className={`bg-white/10 backdrop-blur-lg rounded-xl p-6 border transition-all duration-300 hover:scale-105 ${
+                  owned ? "border-green-400 bg-green-500/20" : "border-white/20"
+                }`}
+              >
+                {/* Preview */}
+                <div className={`w-full h-32 rounded-lg mb-4 ${effect.preview} flex items-center justify-center`}>
+                  <span className="text-white font-bold">PREVIEW</span>
                 </div>
 
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <i className="fas fa-coins text-yellow-500"></i>
-                      <span className="font-bold text-lg">{item.price} xu</span>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      item.effectType === 'avatar' ? 'bg-purple-100 text-purple-800' :
-                      item.effectType === 'badge' ? 'bg-blue-100 text-blue-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {item.effectType}
-                    </span>
-                  </div>
-
-                  {equipped ? (
-                    <button className="btn bg-green-500 text-white w-full" disabled>
-                      <i className="fas fa-check mr-2"></i>Đang sử dụng
-                    </button>
-                  ) : owned ? (
+                {/* Info */}
+                <h3 className="text-xl font-bold text-white mb-2">{effect.name}</h3>
+                <p className="text-gray-300 text-sm mb-4">{effect.description}</p>
+                
+                {/* Price & Button */}
+                <div className="flex justify-between items-center">
+                  <span className="text-yellow-400 font-bold">💰 {effect.price}</span>
+                  
+                  {owned ? (
                     <button
-                      onClick={() => handleEquip(item.effectId)}
-                      className="btn btn-secondary w-full"
+                      onClick={() => activateEffect(effect.id)}
+                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold transition-colors"
                     >
-                      <i className="fas fa-check-circle mr-2"></i>Trang bị
+                      USE
                     </button>
                   ) : (
                     <button
-                      onClick={() => handlePurchase(item._id)}
-                      className="btn btn-primary w-full"
-                      disabled={user?.coins < item.price}
+                      onClick={() => buyEffect(effect)}
+                      disabled={!canBuy}
+                      className={`px-4 py-2 rounded-lg font-bold transition-colors ${
+                        canBuy
+                          ? "bg-blue-500 hover:bg-blue-600 text-white"
+                          : "bg-gray-500 text-gray-300 cursor-not-allowed"
+                      }`}
                     >
-                      <i className="fas fa-shopping-cart mr-2"></i>Mua
+                      BUY
                     </button>
                   )}
                 </div>
@@ -130,6 +131,27 @@ const Shop = () => {
             );
           })}
         </div>
+
+        {/* Owned Effects */}
+        {purchasedEffects.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-white mb-6">🎒 Your Effects</h2>
+            <div className="flex flex-wrap gap-4">
+              {purchasedEffects.map((effectId) => {
+                const effect = effects.find(e => e.id === effectId);
+                return (
+                  <button
+                    key={effectId}
+                    onClick={() => activateEffect(effectId)}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full font-bold hover:scale-110 transition-transform"
+                  >
+                    ✨ {effect?.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
