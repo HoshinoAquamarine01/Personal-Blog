@@ -30,10 +30,27 @@ const AdminDashboard = () => {
   const [pendingPosts, setPendingPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [questForm, setQuestForm] = useState({ title: "", description: "", requirement: 1, reward: 10, icon: "fa-tasks" });
-  const [shopForm, setShopForm] = useState({ name: "", description: "", price: 10, effectId: "", effectType: "avatar", icon: "fa-star" });
+  const [questForm, setQuestForm] = useState({
+    title: "",
+    description: "",
+    requirement: 1,
+    reward: 10,
+    icon: "fa-tasks",
+  });
+  const [shopForm, setShopForm] = useState({
+    name: "",
+    description: "",
+    price: 10,
+    effectId: "",
+    effectType: "avatar",
+    icon: "fa-star",
+  });
   const [editingQuest, setEditingQuest] = useState(null);
   const [editingShop, setEditingShop] = useState(null);
+  const [showCoinModal, setShowCoinModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [coinAmount, setCoinAmount] = useState("");
+  const [coinAction, setCoinAction] = useState("add");
 
   useEffect(() => {
     if (!user || !isAdmin()) {
@@ -50,7 +67,9 @@ const AdminDashboard = () => {
 
       const postsRes = await api.get("/posts").catch(() => ({ data: [] }));
       const usersRes = await api.get("/users").catch(() => ({ data: [] }));
-      const pendingRes = await api.get("/posts/pending").catch(() => ({ data: [] }));
+      const pendingRes = await api
+        .get("/posts/pending")
+        .catch(() => ({ data: [] }));
       const questsRes = await api.get("/quests").catch(() => ({ data: [] }));
       const shopRes = await api.get("/shop").catch(() => ({ data: [] }));
 
@@ -129,6 +148,34 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleManageCoins = (user) => {
+    setSelectedUser(user);
+    setShowCoinModal(true);
+  };
+
+  const handleUpdateCoins = async (e) => {
+    e.preventDefault();
+
+    if (!coinAmount || isNaN(coinAmount)) {
+      alert("Vui lòng nhập số coin hợp lệ");
+      return;
+    }
+
+    try {
+      const res = await api.put(`/admin/users/${selectedUser._id}/coins`, {
+        coins: parseInt(coinAmount),
+        action: coinAction,
+      });
+
+      alert(res.data.message);
+      setShowCoinModal(false);
+      setCoinAmount("");
+      fetchDashboardData();
+    } catch (error) {
+      alert(error.response?.data?.error || "Không thể cập nhật coin");
+    }
   };
 
   if (loading) {
@@ -231,7 +278,16 @@ const AdminDashboard = () => {
 
       {/* Tabs Navigation */}
       <div className="flex gap-2 mb-6 bg-white p-4 rounded-lg shadow-md flex-wrap animate-slideUp">
-        {["overview", "posts", "pending", "users", "quests", "shop", "coins", "settings"].map((tab) => (
+        {[
+          "overview",
+          "posts",
+          "pending",
+          "users",
+          "quests",
+          "shop",
+          "coins",
+          "settings",
+        ].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -243,14 +299,21 @@ const AdminDashboard = () => {
           >
             <i
               className={`fas fa-${
-                tab === "overview" ? "chart-line" :
-                tab === "posts" ? "file-alt" :
-                tab === "pending" ? "clock" :
-                tab === "users" ? "users" :
-                tab === "quests" ? "tasks" :
-                tab === "shop" ? "store" :
-                tab === "coins" ? "coins" :
-                "cog"
+                tab === "overview"
+                  ? "chart-line"
+                  : tab === "posts"
+                  ? "file-alt"
+                  : tab === "pending"
+                  ? "clock"
+                  : tab === "users"
+                  ? "users"
+                  : tab === "quests"
+                  ? "tasks"
+                  : tab === "shop"
+                  ? "store"
+                  : tab === "coins"
+                  ? "coins"
+                  : "cog"
               } mr-2`}
             ></i>
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -450,7 +513,9 @@ const AdminDashboard = () => {
                             {post.author?.username}
                           </span>
                           <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded font-semibold">
-                            {post.author?.role === "manager" ? "👔 Manager" : "User"}
+                            {post.author?.role === "manager"
+                              ? "👔 Manager"
+                              : "User"}
                           </span>
                           <span>
                             <i className="fas fa-calendar mr-1 text-primary"></i>
@@ -553,6 +618,13 @@ const AdminDashboard = () => {
                         >
                           <i className="fas fa-trash mr-2"></i>Delete
                         </button>
+                        <button
+                          onClick={() => handleManageCoins(u)}
+                          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors font-medium"
+                          title="Manage Coins"
+                        >
+                          <i className="fas fa-coins mr-2"></i>Coins
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -568,36 +640,52 @@ const AdminDashboard = () => {
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
               <i className="fas fa-tasks text-primary mr-2"></i>Quản lý Nhiệm vụ
             </h2>
-            
+
             <div className="card mb-6">
-              <h3 className="text-lg font-bold mb-4">{editingQuest ? "Sửa" : "Thêm"} Nhiệm vụ</h3>
+              <h3 className="text-lg font-bold mb-4">
+                {editingQuest ? "Sửa" : "Thêm"} Nhiệm vụ
+              </h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="Tiêu đề"
                   value={questForm.title}
-                  onChange={(e) => setQuestForm({...questForm, title: e.target.value})}
+                  onChange={(e) =>
+                    setQuestForm({ ...questForm, title: e.target.value })
+                  }
                   className="form-control"
                 />
                 <input
                   type="text"
                   placeholder="Mô tả"
                   value={questForm.description}
-                  onChange={(e) => setQuestForm({...questForm, description: e.target.value})}
+                  onChange={(e) =>
+                    setQuestForm({ ...questForm, description: e.target.value })
+                  }
                   className="form-control"
                 />
                 <input
                   type="number"
                   placeholder="Yêu cầu"
                   value={questForm.requirement}
-                  onChange={(e) => setQuestForm({...questForm, requirement: parseInt(e.target.value)})}
+                  onChange={(e) =>
+                    setQuestForm({
+                      ...questForm,
+                      requirement: parseInt(e.target.value),
+                    })
+                  }
                   className="form-control"
                 />
                 <input
                   type="number"
                   placeholder="Phần thưởng (xu)"
                   value={questForm.reward}
-                  onChange={(e) => setQuestForm({...questForm, reward: parseInt(e.target.value)})}
+                  onChange={(e) =>
+                    setQuestForm({
+                      ...questForm,
+                      reward: parseInt(e.target.value),
+                    })
+                  }
                   className="form-control"
                 />
               </div>
@@ -610,7 +698,13 @@ const AdminDashboard = () => {
                       } else {
                         await api.post("/quests", questForm);
                       }
-                      setQuestForm({ title: "", description: "", requirement: 1, reward: 10, icon: "fa-tasks" });
+                      setQuestForm({
+                        title: "",
+                        description: "",
+                        requirement: 1,
+                        reward: 10,
+                        icon: "fa-tasks",
+                      });
                       setEditingQuest(null);
                       fetchDashboardData();
                     } catch (err) {
@@ -619,13 +713,20 @@ const AdminDashboard = () => {
                   }}
                   className="btn btn-primary"
                 >
-                  <i className="fas fa-save mr-2"></i>{editingQuest ? "Cập nhật" : "Thêm"}
+                  <i className="fas fa-save mr-2"></i>
+                  {editingQuest ? "Cập nhật" : "Thêm"}
                 </button>
                 {editingQuest && (
                   <button
                     onClick={() => {
                       setEditingQuest(null);
-                      setQuestForm({ title: "", description: "", requirement: 1, reward: 10, icon: "fa-tasks" });
+                      setQuestForm({
+                        title: "",
+                        description: "",
+                        requirement: 1,
+                        reward: 10,
+                        icon: "fa-tasks",
+                      });
                     }}
                     className="btn btn-secondary"
                   >
@@ -637,15 +738,23 @@ const AdminDashboard = () => {
 
             <div className="space-y-3">
               {quests.map((quest) => (
-                <div key={quest._id} className="p-4 bg-gray-50 rounded-lg border">
+                <div
+                  key={quest._id}
+                  className="p-4 bg-gray-50 rounded-lg border"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-800 mb-2">{quest.title}</h3>
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">
+                        {quest.title}
+                      </h3>
                       <p className="text-gray-600 mb-2">{quest.description}</p>
                       <div className="flex gap-4 text-sm">
-                        <span className="text-gray-600">Yêu cầu: {quest.requirement}</span>
+                        <span className="text-gray-600">
+                          Yêu cầu: {quest.requirement}
+                        </span>
                         <span className="text-yellow-600 font-semibold">
-                          <i className="fas fa-coins mr-1"></i>{quest.reward} xu
+                          <i className="fas fa-coins mr-1"></i>
+                          {quest.reward} xu
                         </span>
                       </div>
                     </div>
@@ -658,7 +767,7 @@ const AdminDashboard = () => {
                             description: quest.description,
                             requirement: quest.requirement,
                             reward: quest.reward,
-                            icon: quest.icon
+                            icon: quest.icon,
                           });
                         }}
                         className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -690,41 +799,56 @@ const AdminDashboard = () => {
             <h2 className="text-2xl font-bold text-slate-800 mb-6">
               <i className="fas fa-store text-primary mr-2"></i>Quản lý Cửa hàng
             </h2>
-            
+
             <div className="card mb-6">
-              <h3 className="text-lg font-bold mb-4">{editingShop ? "Sửa" : "Thêm"} Vật phẩm</h3>
+              <h3 className="text-lg font-bold mb-4">
+                {editingShop ? "Sửa" : "Thêm"} Vật phẩm
+              </h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="Tên vật phẩm"
                   value={shopForm.name}
-                  onChange={(e) => setShopForm({...shopForm, name: e.target.value})}
+                  onChange={(e) =>
+                    setShopForm({ ...shopForm, name: e.target.value })
+                  }
                   className="form-control"
                 />
                 <input
                   type="text"
                   placeholder="Mô tả"
                   value={shopForm.description}
-                  onChange={(e) => setShopForm({...shopForm, description: e.target.value})}
+                  onChange={(e) =>
+                    setShopForm({ ...shopForm, description: e.target.value })
+                  }
                   className="form-control"
                 />
                 <input
                   type="number"
                   placeholder="Giá (xu)"
                   value={shopForm.price}
-                  onChange={(e) => setShopForm({...shopForm, price: parseInt(e.target.value)})}
+                  onChange={(e) =>
+                    setShopForm({
+                      ...shopForm,
+                      price: parseInt(e.target.value),
+                    })
+                  }
                   className="form-control"
                 />
                 <input
                   type="text"
                   placeholder="Effect ID (vd: sparkle-avatar)"
                   value={shopForm.effectId}
-                  onChange={(e) => setShopForm({...shopForm, effectId: e.target.value})}
+                  onChange={(e) =>
+                    setShopForm({ ...shopForm, effectId: e.target.value })
+                  }
                   className="form-control"
                 />
                 <select
                   value={shopForm.effectType}
-                  onChange={(e) => setShopForm({...shopForm, effectType: e.target.value})}
+                  onChange={(e) =>
+                    setShopForm({ ...shopForm, effectType: e.target.value })
+                  }
                   className="form-control"
                 >
                   <option value="avatar">Avatar Effect</option>
@@ -735,7 +859,9 @@ const AdminDashboard = () => {
                   type="text"
                   placeholder="Icon (vd: fa-star)"
                   value={shopForm.icon}
-                  onChange={(e) => setShopForm({...shopForm, icon: e.target.value})}
+                  onChange={(e) =>
+                    setShopForm({ ...shopForm, icon: e.target.value })
+                  }
                   className="form-control"
                 />
               </div>
@@ -748,7 +874,14 @@ const AdminDashboard = () => {
                       } else {
                         await api.post("/shop", shopForm);
                       }
-                      setShopForm({ name: "", description: "", price: 10, effectId: "", effectType: "avatar", icon: "fa-star" });
+                      setShopForm({
+                        name: "",
+                        description: "",
+                        price: 10,
+                        effectId: "",
+                        effectType: "avatar",
+                        icon: "fa-star",
+                      });
                       setEditingShop(null);
                       fetchDashboardData();
                     } catch (err) {
@@ -757,13 +890,21 @@ const AdminDashboard = () => {
                   }}
                   className="btn btn-primary"
                 >
-                  <i className="fas fa-save mr-2"></i>{editingShop ? "Cập nhật" : "Thêm"}
+                  <i className="fas fa-save mr-2"></i>
+                  {editingShop ? "Cập nhật" : "Thêm"}
                 </button>
                 {editingShop && (
                   <button
                     onClick={() => {
                       setEditingShop(null);
-                      setShopForm({ name: "", description: "", price: 10, effectId: "", effectType: "avatar", icon: "fa-star" });
+                      setShopForm({
+                        name: "",
+                        description: "",
+                        price: 10,
+                        effectId: "",
+                        effectType: "avatar",
+                        icon: "fa-star",
+                      });
                     }}
                     className="btn btn-secondary"
                   >
@@ -775,11 +916,18 @@ const AdminDashboard = () => {
 
             <div className="grid md:grid-cols-3 gap-4">
               {shopItems.map((item) => (
-                <div key={item._id} className="p-4 bg-gray-50 rounded-lg border">
+                <div
+                  key={item._id}
+                  className="p-4 bg-gray-50 rounded-lg border"
+                >
                   <div className="text-center mb-3">
-                    <i className={`fas ${item.icon} text-4xl text-blue-600 mb-2`}></i>
+                    <i
+                      className={`fas ${item.icon} text-4xl text-blue-600 mb-2`}
+                    ></i>
                     <h3 className="font-bold text-lg">{item.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                    <p className="text-sm text-gray-600 mb-2">
+                      {item.description}
+                    </p>
                     <div className="flex items-center justify-center gap-2 text-yellow-600 font-bold">
                       <i className="fas fa-coins"></i>
                       <span>{item.price} xu</span>
@@ -795,7 +943,7 @@ const AdminDashboard = () => {
                           price: item.price,
                           effectId: item.effectId,
                           effectType: item.effectType,
-                          icon: item.icon
+                          icon: item.icon,
                         });
                       }}
                       className="btn bg-blue-500 text-white flex-1 hover:bg-blue-600"
@@ -843,14 +991,17 @@ const AdminDashboard = () => {
                       <div className="text-right">
                         <p className="text-sm text-gray-600">Xu hiện tại</p>
                         <p className="text-2xl font-bold text-yellow-600">
-                          <i className="fas fa-coins mr-1"></i>{u.coins || 0}
+                          <i className="fas fa-coins mr-1"></i>
+                          {u.coins || 0}
                         </p>
                       </div>
                       <button
                         onClick={async () => {
                           const amount = prompt("Nhập số xu (+ hoặc -):");
                           if (amount) {
-                            await api.patch(`/users/${u._id}`, { coins: (u.coins || 0) + parseInt(amount) });
+                            await api.patch(`/users/${u._id}`, {
+                              coins: (u.coins || 0) + parseInt(amount),
+                            });
                             fetchDashboardData();
                           }
                         }}
@@ -912,6 +1063,71 @@ const AdminDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Coin Management Modal */}
+      {showCoinModal && (
+        <div className="modal-overlay" onClick={() => setShowCoinModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Quản lý Coin - {selectedUser?.username}</h2>
+            </div>
+            <form onSubmit={handleUpdateCoins} className="modal-body">
+              <div className="mb-4">
+                <p className="text-gray-600 mb-2">
+                  Coin hiện tại: <strong>{selectedUser?.coins || 0} 💰</strong>
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Hành động
+                </label>
+                <select
+                  value={coinAction}
+                  onChange={(e) => setCoinAction(e.target.value)}
+                  className="form-control"
+                >
+                  <option value="add">Cộng thêm</option>
+                  <option value="set">Đặt số coin</option>
+                </select>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Số coin {coinAction === "add" ? "(+/-)" : "(Set to)"}
+                </label>
+                <input
+                  type="number"
+                  value={coinAmount}
+                  onChange={(e) => setCoinAmount(e.target.value)}
+                  className="form-control"
+                  placeholder={coinAction === "add" ? "+50 hoặc -50" : "100"}
+                  required
+                />
+                {coinAction === "add" && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Nhập số âm để trừ coin (ví dụ: -50)
+                  </p>
+                )}
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  onClick={() => setShowCoinModal(false)}
+                  className="btn btn-secondary"
+                >
+                  Hủy
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <i className="fas fa-check mr-2"></i>
+                  Xác nhận
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -99,31 +99,36 @@ router.put("/:id", verifyToken, async (req, res) => {
 });
 
 // Upload avatar
-router.post("/avatar", verifyToken, upload.single("avatar"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
+router.post(
+  "/avatar",
+  verifyToken,
+  upload.single("avatar"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
 
-    const avatarUrl = `/uploads/users/${req.file.filename}`;
-    const user = await User.findByIdAndUpdate(
-      req.userId,
-      { avatar: avatarUrl },
-      { new: true }
-    ).select("-password");
+      const avatarUrl = `/uploads/users/${req.file.filename}`;
+      const user = await User.findByIdAndUpdate(
+        req.userId,
+        { avatar: avatarUrl },
+        { new: true }
+      ).select("-password");
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
 
-    res.json({ avatar: avatarUrl, user });
-  } catch (error) {
-    if (req.file) {
-      fs.unlinkSync(req.file.path);
+      res.json({ avatar: avatarUrl, user });
+    } catch (error) {
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      res.status(500).json({ error: error.message });
     }
-    res.status(500).json({ error: error.message });
   }
-});
+);
 
 // Upload cover image
 router.post("/cover", verifyToken, upload.single("cover"), async (req, res) => {
@@ -255,6 +260,95 @@ router.delete("/:id", verifyToken, verifyManager, async (req, res) => {
     res
       .status(500)
       .json({ message: "Error deleting user", error: error.message });
+  }
+});
+
+// Follow user
+router.post("/:id/follow", verifyToken, async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+    const currentUserId = req.userId;
+
+    if (targetUserId === currentUserId) {
+      return res.status(400).json({ error: "Cannot follow yourself" });
+    }
+
+    const targetUser = await User.findById(targetUserId);
+    const currentUser = await User.findById(currentUserId);
+
+    if (!targetUser || !currentUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if already following
+    if (currentUser.following?.includes(targetUserId)) {
+      return res.status(400).json({ error: "Already following this user" });
+    }
+
+    // Add to following/followers
+    if (!currentUser.following) currentUser.following = [];
+    if (!targetUser.followers) targetUser.followers = [];
+
+    currentUser.following.push(targetUserId);
+    targetUser.followers.push(currentUserId);
+
+    await currentUser.save();
+    await targetUser.save();
+
+    res.json({
+      success: true,
+      message: "Followed successfully",
+      isFollowing: true,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Unfollow user
+router.delete("/:id/follow", verifyToken, async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+    const currentUserId = req.userId;
+
+    const targetUser = await User.findById(targetUserId);
+    const currentUser = await User.findById(currentUserId);
+
+    if (!targetUser || !currentUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Remove from following/followers
+    currentUser.following =
+      currentUser.following?.filter((id) => id.toString() !== targetUserId) ||
+      [];
+
+    targetUser.followers =
+      targetUser.followers?.filter((id) => id.toString() !== currentUserId) ||
+      [];
+
+    await currentUser.save();
+    await targetUser.save();
+
+    res.json({
+      success: true,
+      message: "Unfollowed successfully",
+      isFollowing: false,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Check if following
+router.get("/:id/is-following", verifyToken, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.userId);
+    const isFollowing = currentUser.following?.includes(req.params.id) || false;
+
+    res.json({ isFollowing });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

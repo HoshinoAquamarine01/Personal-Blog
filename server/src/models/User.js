@@ -44,6 +44,19 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    points: {
+      type: Number,
+      default: 0,
+    },
+    badges: [
+      {
+        type: String,
+      },
+    ],
+    level: {
+      type: Number,
+      default: 1,
+    },
   },
   { timestamps: true }
 );

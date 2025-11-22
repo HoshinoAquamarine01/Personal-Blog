@@ -1,6 +1,7 @@
 import express from "express";
 import Post from "../model/Post.js";
 import { verifyToken, verifyAdmin, verifyManager } from "../middleware/auth.js";
+import { updateQuestProgress } from "../utils/questProgress.js";
 
 const router = express.Router();
 
@@ -8,7 +9,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const posts = await Post.find({
-      $or: [{ isApproved: true }, { isApproved: { $exists: false } }]
+      $or: [{ isApproved: true }, { isApproved: { $exists: false } }],
     })
       .populate("author", "username email role avatar")
       .sort({ createdAt: -1 });
@@ -28,7 +29,9 @@ router.get("/my-posts", verifyToken, verifyManager, async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching my posts", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching my posts", error: error.message });
   }
 });
 
@@ -40,7 +43,9 @@ router.get("/pending", verifyToken, verifyAdmin, async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(posts);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching pending posts", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching pending posts", error: error.message });
   }
 });
 
@@ -128,6 +133,9 @@ router.post("/", verifyToken, verifyManager, async (req, res) => {
     await savedPost.populate("author", "username email avatar");
     console.log("✅ Post populated");
 
+    // Update quest progress
+    await updateQuestProgress(req.userId, "post");
+
     res.status(201).json(savedPost);
   } catch (error) {
     console.error("❌ ERROR CREATING POST:", error);
@@ -185,7 +193,9 @@ router.patch("/:id/approve", verifyToken, verifyAdmin, async (req, res) => {
 
     res.json(post);
   } catch (error) {
-    res.status(500).json({ message: "Error approving post", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error approving post", error: error.message });
   }
 });
 

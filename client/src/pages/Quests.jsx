@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../context/Authcontext";
 import api from "../utils/api";
 
 const Quests = () => {
-  const { user } = useAuth();
   const [quests, setQuests] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,23 +11,25 @@ const Quests = () => {
 
   const fetchQuests = async () => {
     try {
-      const res = await api.get("/quests");
-      setQuests(res.data);
-    } catch (err) {
-      console.error(err);
+      console.log("Fetching quests...");
+      const res = await api.get("/quest");
+      console.log("Quests response:", res.data);
+      setQuests(res.data.quests || []);
+    } catch (error) {
+      console.error("Error fetching quests:", error);
+      alert("Lỗi: " + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClaim = async (questId) => {
+  const handleClaimReward = async (questId) => {
     try {
-      await api.post(`/quests/${questId}/claim`);
-      alert("✅ Đã nhận thưởng!");
+      const res = await api.post(`/quest/${questId}/claim`);
+      alert(res.data.message);
       fetchQuests();
-      window.location.reload();
-    } catch (err) {
-      alert(err.response?.data?.message || "Lỗi nhận thưởng");
+    } catch (error) {
+      alert(error.response?.data?.error || "Lỗi khi nhận thưởng");
     }
   };
 
@@ -42,78 +42,83 @@ const Quests = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container max-w-6xl mx-auto px-4">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">
-              <i className="fas fa-tasks text-primary mr-3"></i>
-              Nhiệm vụ
-            </h1>
-            <p className="text-gray-600">Hoàn thành nhiệm vụ để nhận xu</p>
-          </div>
-          <div className="card px-6 py-3">
-            <div className="flex items-center gap-3">
-              <i className="fas fa-coins text-yellow-500 text-2xl"></i>
-              <div>
-                <p className="text-sm text-gray-600">Xu của bạn</p>
-                <p className="text-2xl font-bold text-slate-800">{user?.coins || 0}</p>
+    <div className="container py-10">
+      <h1 className="text-3xl font-bold mb-6">
+        <i className="fas fa-tasks text-blue-600 mr-2"></i>
+        Nhiệm vụ
+      </h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {quests.map((quest) => (
+          <div key={quest._id} className="card">
+            <h3 className="text-xl font-bold mb-2">{quest.title}</h3>
+            <p className="text-gray-600 mb-4">{quest.description}</p>
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="flex justify-between text-sm mb-1">
+                <span>
+                  Tiến độ: {quest.progress}/{quest.targetCount}
+                </span>
+                <span>
+                  {Math.round((quest.progress / quest.targetCount) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all"
+                  style={{
+                    width: `${Math.min(
+                      (quest.progress / quest.targetCount) * 100,
+                      100
+                    )}%`,
+                  }}
+                ></div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {quests.map((quest) => (
-            <div key={quest._id} className="card hover:shadow-xl transition-shadow">
-              <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <i className={`fas ${quest.icon} text-blue-600 text-2xl`}></i>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-slate-800 mb-2">{quest.title}</h3>
-                  <p className="text-gray-600 mb-4">{quest.description}</p>
-                  
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600">Tiến độ</span>
-                      <span className="font-semibold">{quest.progress}/{quest.requirement}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all"
-                        style={{ width: `${Math.min((quest.progress / quest.requirement) * 100, 100)}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <i className="fas fa-coins text-yellow-500"></i>
-                      <span className="font-bold text-lg">{quest.reward} xu</span>
-                    </div>
-                    {quest.claimed ? (
-                      <span className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg font-semibold">
-                        <i className="fas fa-check mr-2"></i>Đã nhận
-                      </span>
-                    ) : quest.completed ? (
-                      <button
-                        onClick={() => handleClaim(quest._id)}
-                        className="btn btn-primary"
-                      >
-                        <i className="fas fa-gift mr-2"></i>Nhận thưởng
-                      </button>
-                    ) : (
-                      <span className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">
-                        Chưa hoàn thành
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
+            {/* Rewards */}
+            <div className="mb-4 flex gap-2">
+              {quest.reward.points > 0 && (
+                <span className="badge bg-yellow-100 text-yellow-800">
+                  +{quest.reward.points} điểm
+                </span>
+              )}
+              {quest.reward.badge && (
+                <span className="badge bg-purple-100 text-purple-800">
+                  Huy hiệu: {quest.reward.badge}
+                </span>
+              )}
+              {quest.reward.vipDays > 0 && (
+                <span className="badge bg-orange-100 text-orange-800">
+                  +{quest.reward.vipDays} ngày VIP
+                </span>
+              )}
             </div>
-          ))}
-        </div>
+
+            {/* Action Button */}
+            {quest.isCompleted ? (
+              quest.rewardClaimed ? (
+                <button disabled className="btn btn-secondary w-full">
+                  <i className="fas fa-check-circle mr-2"></i>
+                  Đã hoàn thành
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleClaimReward(quest._id)}
+                  className="btn btn-primary w-full"
+                >
+                  <i className="fas fa-gift mr-2"></i>
+                  Nhận thưởng
+                </button>
+              )
+            ) : (
+              <button disabled className="btn btn-secondary w-full">
+                Đang thực hiện...
+              </button>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

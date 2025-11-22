@@ -8,9 +8,10 @@ import userRoutes from "./routes/users.js";
 import adminRoutes from "./routes/admin.js";
 import chatRoutes from "./routes/chat.js";
 import notificationRoutes from "./routes/notifications.js";
-import vipRoutes from "./routes/vip.js";
-import questRoutes from "./routes/quests.js";
 import shopRoutes from "./routes/shop.js";
+import vipRoutes from "./routes/vip.js";
+import questRoutes from "./routes/quest.js";
+import chatbotRoutes from "./routes/chatbot.js";
 import path from "path";
 
 dotenv.config();
@@ -33,10 +34,9 @@ app.use("/api/posts", postRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/quest", questRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/vip", vipRoutes);
-app.use("/api/quests", questRoutes);
-app.use("/api/shop", shopRoutes);
+app.use("/api/chatbot", chatbotRoutes);
 
 // Test route
 app.get("/api/health", (req, res) => {

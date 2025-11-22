@@ -75,6 +75,10 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    points: {
+      type: Number,
+      default: 0,
+    },
     ownedEffects: {
       type: [String],
       default: [],
@@ -83,6 +87,23 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    dailyQuests: {
+      lastLoginDate: { type: Date, default: null },
+      lastShareDate: { type: Date, default: null },
+      lastLikeDate: { type: Date, default: null },
+    },
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,

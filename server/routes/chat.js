@@ -1,26 +1,23 @@
 import express from "express";
-import mongoose from "mongoose";
 import Chat from "../model/Chat.js";
-import Notification from "../model/Notification.js";
 import { verifyToken } from "../middleware/auth.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import mongoose from "mongoose";
+import User from "../model/User.js";
 
 const router = express.Router();
 
 // Get conversations list
 router.get("/conversations", verifyToken, async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = new mongoose.Types.ObjectId(req.userId);
 
-    const messages = await Chat.aggregate([
+    const conversations = await Chat.aggregate([
       {
         $match: {
-          $or: [
-            { sender: new mongoose.Types.ObjectId(userId) },
-            { receiver: new mongoose.Types.ObjectId(userId) },
-          ],
+          $or: [{ sender: userId }, { receiver: userId }],
         },
       },
       {
@@ -29,30 +26,36 @@ router.get("/conversations", verifyToken, async (req, res) => {
       {
         $group: {
           _id: {
-            $cond: [
-              { $eq: ["$sender", new mongoose.Types.ObjectId(userId)] },
-              "$receiver",
-              "$sender",
-            ],
+            $cond: [{ $eq: ["$sender", userId] }, "$receiver", "$sender"],
           },
-          lastMessage: { $first: "$$ROOT" },
+          lastMessage: { $first: "$message" },
+          lastMessageTime: { $first: "$createdAt" },
+          fileUrl: { $first: "$fileUrl" },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$receiver", userId] },
+                    { $eq: ["$isRead", false] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
         },
       },
     ]);
 
-    const conversations = await Promise.all(
-      messages.map(async (msg) => {
-        const otherUserId = msg._id;
-        const user = await mongoose.model("User").findById(otherUserId).select("username avatar");
+    // Populate user info
+    const populatedConversations = await User.populate(conversations, {
+      path: "_id",
+      select: "username avatar email",
+    });
 
-        return {
-          user,
-          lastMessage: msg.lastMessage,
-        };
-      })
-    );
-
-    res.json({ conversations });
+    res.json({ conversations: populatedConversations });
   } catch (error) {
     console.error("Error fetching conversations:", error);
     res.status(500).json({ error: error.message });
@@ -125,15 +128,6 @@ router.post("/send", verifyToken, upload.single("file"), async (req, res) => {
     const chatMessage = await Chat.create(newMessage);
     await chatMessage.populate("sender", "username avatar");
     await chatMessage.populate("receiver", "username avatar");
-
-    // Create notification
-    await Notification.create({
-      recipient: receiverId,
-      sender: senderId,
-      type: "message",
-      content: `${chatMessage.sender.username} đã gửi tin nhắn cho bạn`,
-      link: `/chat/${senderId}`,
-    });
 
     console.log("Message sent:", chatMessage);
 
